@@ -86,8 +86,9 @@ export const RARITY_WEIGHTS: CardRarityWeight = {
   legendary: 1,
 };
 
-// Rarity-tier reward — 唔同 rarity 派唔同 bonus XP
-// Common 唔加 bonus 因為已經有 base XP，留住 rarity 跳升嘅落差感
+// Rarity-tier reward — different rarity yields different bonus XP.
+// Common adds no bonus (base XP already kicks in); preserves the
+// rarity-tier upgrade feel.
 export const RARITY_XP_BONUS: CardRarityWeight = {
   common: 0,
   rare: 5,

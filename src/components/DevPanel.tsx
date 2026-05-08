@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DrawRitual } from "./DrawRitual";
+import { useDict } from "@/i18n/Provider";
 import type { CardRarity } from "@/lib/types";
 
 const RARITIES: Array<{ key: CardRarity; label: string; color: string }> = [
@@ -15,6 +16,11 @@ export function DevPanel() {
   // Hidden in production builds — Next.js inlines NODE_ENV at compile time.
   if (process.env.NODE_ENV !== "development") return null;
 
+  return <DevPanelInner />;
+}
+
+function DevPanelInner() {
+  const dict = useDict();
   const [open, setOpen] = useState(false);
   const [forced, setForced] = useState<CardRarity | null>(null);
 
@@ -26,7 +32,7 @@ export function DevPanel() {
   return (
     <>
       <div className="dev-panel" aria-label="Dev tools">
-        <span className="dev-tag">DEV · 強制抽</span>
+        <span className="dev-tag">{dict.dev_panel.label}</span>
         <div className="dev-buttons">
           {RARITIES.map((r) => (
             <button
@@ -77,7 +83,7 @@ export function DevPanel() {
           font-size: 9px;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: var(--color-fg-subtle);
+          color: var(--color-muted);
         }
         .dev-buttons {
           display: flex; gap: 4px;
@@ -85,8 +91,8 @@ export function DevPanel() {
         .dev-btn {
           width: 30px; height: 30px;
           border-radius: 8px;
-          border: 1px solid var(--c, var(--color-border-strong));
-          color: var(--c, var(--color-fg));
+          border: 1px solid var(--c, var(--color-border));
+          color: var(--c, var(--color-text));
           background: rgba(0,0,0,0.4);
           font-size: 12px;
           font-weight: 700;

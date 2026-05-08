@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { drawCard } from "@/lib/actions";
+import { useDict } from "@/i18n/Provider";
 import type { CardRarity, DrawCard } from "@/lib/types";
 
 type Trigger = "daily_complete" | "weekly_target" | "streak_milestone";
@@ -60,11 +61,7 @@ const RARITY_STYLE: Record<
   },
 };
 
-const TRIGGER_HEADLINE: Record<Trigger, string> = {
-  daily_complete: "今日達成 · 抽一張",
-  weekly_target: "本週達標 · 抽一張",
-  streak_milestone: "七日不間斷 · 抽一張",
-};
+// Headlines come from i18n at render time — see useDict() inside DrawRitual.
 
 // Sigil: a hexagonal frame with a runic core. Pure SVG.
 function Sigil() {
@@ -238,9 +235,17 @@ export function DrawRitual({
   onClose,
   forceRarity,
 }: DrawRitualProps) {
+  const dict = useDict();
   const [phase, setPhase] = useState<Phase>("back");
   const [card, setCard] = useState<DrawCard | null>(null);
   const [xpBonus, setXpBonus] = useState(0);
+
+  const headline =
+    trigger === "daily_complete"
+      ? dict.draw_ritual.headline_daily_complete
+      : trigger === "weekly_target"
+      ? dict.draw_ritual.headline_weekly_target
+      : dict.draw_ritual.headline_streak_milestone;
 
   useEffect(() => {
     if (open) {
@@ -324,7 +329,7 @@ export function DrawRitual({
         className="ritual-stack"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="ritual-headline">{TRIGGER_HEADLINE[trigger]}</p>
+        <p className="ritual-headline">{headline}</p>
 
         <div className="card-stage">
           {/* Light rays — only on reveal */}
@@ -360,7 +365,9 @@ export function DrawRitual({
                     <Sigil />
                   </div>
                   <p className="back-prompt">
-                    {phase === "back" ? "點一下抽" : "蓄力中..."}
+                    {phase === "back"
+                      ? dict.draw_ritual.tap_to_draw
+                      : dict.draw_ritual.charging}
                   </p>
                 </div>
               </button>
@@ -400,7 +407,7 @@ export function DrawRitual({
                         }}
                         className="btn-primary w-full"
                       >
-                        收下
+                        {dict.draw_ritual.claim}
                       </button>
                     </div>
                   </>
@@ -414,7 +421,7 @@ export function DrawRitual({
         </div>
 
         {phase === "back" && (
-          <p className="ritual-hint">點咗先翻牌——你抽嘅手勢，係儀式嘅一部分。</p>
+          <p className="ritual-hint">{dict.draw_ritual.hint}</p>
         )}
       </div>
 
@@ -437,14 +444,14 @@ export function DrawRitual({
           font-size: 11px;
           letter-spacing: 0.32em;
           text-transform: uppercase;
-          color: var(--color-fg-muted);
+          color: var(--color-muted);
         }
         .ritual-hint {
           max-width: 260px;
           text-align: center;
           font-size: 12px;
           line-height: 1.55;
-          color: var(--color-fg-subtle);
+          color: var(--color-muted);
         }
 
         /* Starfield */
@@ -612,7 +619,7 @@ export function DrawRitual({
           font-size: 10px;
           letter-spacing: 0.32em;
           text-transform: uppercase;
-          color: var(--color-fg-muted);
+          color: var(--color-muted);
         }
         .front-xp {
           font-size: 11px;
@@ -638,7 +645,7 @@ export function DrawRitual({
         .front-copy {
           font-size: 14px;
           line-height: 1.6;
-          color: var(--color-fg-muted);
+          color: var(--color-muted);
           margin-top: 12px;
           animation: title-rise 480ms 380ms cubic-bezier(.2,.8,.2,1) backwards;
         }
