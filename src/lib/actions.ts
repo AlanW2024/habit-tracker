@@ -82,9 +82,10 @@ export async function createHabit(
 
 interface CompleteResult {
   ok: boolean;
-  drawnCard: DrawCard | null;
+  shouldDraw: boolean;
   streakBonus: boolean;
   weeklyBonus: boolean;
+  trigger: "daily_complete" | "weekly_target" | "streak_milestone";
 }
 
 export async function completeHabit(
@@ -95,7 +96,7 @@ export async function completeHabit(
   const sb = getServerSupabase();
   const today = todayIso();
 
-  // Idempotent: if already logged today, no-op.
+  // Idempotent: if already logged today, no-op (and no extra draw).
   const { data: existingLog } = await sb
     .from("habit_logs")
     .select("id")
@@ -103,7 +104,13 @@ export async function completeHabit(
     .eq("log_date", today)
     .maybeSingle();
   if (existingLog) {
-    return { ok: true, drawnCard: null, streakBonus: false, weeklyBonus: false };
+    return {
+      ok: true,
+      shouldDraw: false,
+      streakBonus: false,
+      weeklyBonus: false,
+      trigger: "daily_complete",
+    };
   }
 
   const { error: logErr } = await sb.from("habit_logs").insert({
@@ -154,20 +161,27 @@ export async function completeHabit(
       .eq("id", SELF_USER_ID);
   }
 
-  // Variable-ratio draw: every completion grants a guaranteed draw.
-  const drawnCard = await drawRandomCard(
-    streakBonus
-      ? "streak_milestone"
-      : weeklyBonus
-        ? "weekly_target"
-        : "daily_complete",
-  );
+  // 抽卡 deferred to client ritual — see drawCard() below.
+  // 唔再喺 server 自動抽，畀用戶親手揭牌嘅 dopamine peak。
+  const trigger: CompleteResult["trigger"] = streakBonus
+    ? "streak_milestone"
+    : weeklyBonus
+      ? "weekly_target"
+      : "daily_complete";
 
   revalidatePath("/today");
   revalidatePath("/calendar");
   revalidatePath("/stats");
 
-  return { ok: true, drawnCard, streakBonus, weeklyBonus };
+  return { ok: true, shouldDraw: true, streakBonus, weeklyBonus, trigger };
+}
+
+export async function drawCard(
+  trigger: CompleteResult["trigger"],
+): Promise<DrawCard | null> {
+  const card = await drawRandomCard(trigger);
+  revalidatePath("/stats");
+  return card;
 }
 
 async function checkWeeklyTarget(

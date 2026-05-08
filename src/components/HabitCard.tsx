@@ -4,8 +4,10 @@ import { useState, useTransition } from "react";
 import { Check, Flame } from "lucide-react";
 import { completeHabit } from "@/lib/actions";
 import { fireConfetti } from "./ConfettiBurst";
-import { CardReveal } from "./CardReveal";
-import type { DrawCard, TodayHabit } from "@/lib/types";
+import { DrawRitual } from "./DrawRitual";
+import type { TodayHabit } from "@/lib/types";
+
+type Trigger = "daily_complete" | "weekly_target" | "streak_milestone";
 
 interface HabitCardProps {
   habit: TodayHabit;
@@ -14,7 +16,8 @@ interface HabitCardProps {
 export function HabitCard({ habit }: HabitCardProps) {
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState(habit.completed_today);
-  const [drawn, setDrawn] = useState<DrawCard | null>(null);
+  const [ritualOpen, setRitualOpen] = useState(false);
+  const [trigger, setTrigger] = useState<Trigger>("daily_complete");
   const [bonusBadge, setBonusBadge] = useState<string | null>(null);
 
   const onComplete = () => {
@@ -25,7 +28,11 @@ export function HabitCard({ habit }: HabitCardProps) {
       fireConfetti();
       if (result.streakBonus) setBonusBadge("七日不間斷 +100 XP");
       else if (result.weeklyBonus) setBonusBadge("達到本週目標 +50 XP");
-      if (result.drawnCard) setDrawn(result.drawnCard);
+      if (result.shouldDraw) {
+        setTrigger(result.trigger);
+        // Slight delay so confetti gets the spotlight first, then ritual takes over
+        setTimeout(() => setRitualOpen(true), 350);
+      }
     });
   };
 
@@ -91,7 +98,11 @@ export function HabitCard({ habit }: HabitCardProps) {
         </div>
       </article>
 
-      <CardReveal card={drawn} onClose={() => setDrawn(null)} />
+      <DrawRitual
+        open={ritualOpen}
+        trigger={trigger}
+        onClose={() => setRitualOpen(false)}
+      />
     </>
   );
 }
