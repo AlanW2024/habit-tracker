@@ -11,7 +11,7 @@ import type {
 } from "./types";
 
 export async function getProfile(): Promise<Profile> {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   const { data, error } = await sb
     .from("profiles")
     .select("*")
@@ -24,7 +24,7 @@ export async function getProfile(): Promise<Profile> {
 }
 
 export async function getActiveHabits(): Promise<Habit[]> {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   const { data, error } = await sb
     .from("habits")
     .select("*")
@@ -36,7 +36,7 @@ export async function getActiveHabits(): Promise<Habit[]> {
 }
 
 export async function getTodayHabits(todayIso: string): Promise<TodayHabit[]> {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   const habits = await getActiveHabits();
   if (habits.length === 0) return [];
 
@@ -73,7 +73,7 @@ export async function getMonthLogs(
   year: number,
   month: number,
 ): Promise<HabitLog[]> {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   const start = new Date(Date.UTC(year, month - 1, 1));
   const end = new Date(Date.UTC(year, month, 1));
   const startIso = start.toISOString().slice(0, 10);
@@ -98,7 +98,7 @@ export async function getMonthLogs(
 }
 
 export async function getAllCards(): Promise<DrawCard[]> {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   const { data, error } = await sb
     .from("draw_cards")
     .select("*")
@@ -111,7 +111,7 @@ export async function getAllCards(): Promise<DrawCard[]> {
 export async function getRecentDraws(limit = 12): Promise<
   Array<DrawLog & { card: DrawCard }>
 > {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   const { data, error } = await sb
     .from("draw_log")
     .select("*, card:draw_cards(*)")
@@ -127,7 +127,7 @@ export async function getCompletionStats(days = 30): Promise<{
   perDay: Record<string, number>;
   topHabit: { name: string; count: number } | null;
 }> {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   const since = new Date();
   since.setDate(since.getDate() - days);
   const sinceIso = since.toISOString().slice(0, 10);

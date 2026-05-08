@@ -4,6 +4,7 @@ import {
   getProfile,
   getRecentDraws,
 } from "@/lib/db";
+import { signOut } from "@/lib/actions";
 import { identityFor, levelFromTotalXp } from "@/lib/identity";
 
 export default async function StatsPage() {
@@ -83,6 +84,15 @@ export default async function StatsPage() {
           今個禮拜邊個 if-then 最少 friction？邊個最多？下星期可以 tweak 邊一個？
         </p>
       </section>
+
+      <form action={signOut} className="mt-10">
+        <button
+          type="submit"
+          className="text-[12px] text-[var(--color-fg-subtle)] underline-offset-2 hover:text-[var(--color-rose)] hover:underline"
+        >
+          登出
+        </button>
+      </form>
     </div>
   );
 }

@@ -55,7 +55,7 @@ export async function createHabit(
     return { ok: false, error: "請修正欄位", fieldErrors };
   }
 
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   // Enforce Day 1 cap: max 2 active habits in first 21 days.
   const { count } = await sb
     .from("habits")
@@ -99,7 +99,7 @@ export async function completeHabit(
   qty: number,
   note?: string,
 ): Promise<CompleteResult> {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   const today = todayIso();
 
   // Idempotent: if already logged today, no-op (and no extra draw).
@@ -195,7 +195,7 @@ export async function drawCard(
   // Rarity-tier XP bonus
   const xpBonus = RARITY_XP_BONUS[card.rarity] ?? 0;
   if (xpBonus > 0) {
-    const sb = getServerSupabase();
+    const sb = await getServerSupabase();
     const { data: prof } = await sb
       .from("profiles")
       .select("xp")
@@ -218,7 +218,7 @@ async function checkWeeklyTarget(
   habitId: string,
   todayIsoStr: string,
 ): Promise<boolean> {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   const today = new Date(todayIsoStr + "T00:00:00Z");
   // ISO week: Monday is start. JS getUTCDay: Sunday=0..Saturday=6.
   const day = today.getUTCDay() === 0 ? 7 : today.getUTCDay();
@@ -246,7 +246,7 @@ async function drawRandomCard(
   trigger: string,
   forceRarity?: CardRarity,
 ): Promise<DrawCard | null> {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   const rarity = forceRarity ?? pickRarity();
   const { data: cards } = await sb
     .from("draw_cards")
@@ -284,8 +284,14 @@ function pickRarity(): CardRarity {
   return "legendary";
 }
 
+export async function signOut(): Promise<void> {
+  const sb = await getServerSupabase();
+  await sb.auth.signOut();
+  redirect("/login");
+}
+
 export async function archiveHabit(habitId: string): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   await sb
     .from("habits")
     .update({ active: false, archived_at: new Date().toISOString() })
@@ -322,7 +328,7 @@ export async function createRewardCard(
     return { ok: false, error: "請修正欄位", fieldErrors };
   }
 
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   // user-defined cards are tagged via code prefix "u_" so we can list / delete them
   const code = `u_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
   const copy =
@@ -344,7 +350,7 @@ export async function createRewardCard(
 }
 
 export async function deleteRewardCard(cardId: string): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = await getServerSupabase();
   // Only allow deleting user-defined cards (code starts with 'u_')
   const { data: card } = await sb
     .from("draw_cards")
