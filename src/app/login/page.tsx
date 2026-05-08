@@ -11,14 +11,14 @@ export default function LoginPage() {
         </p>
         <h1 className="mt-2 text-3xl font-semibold leading-tight">登入</h1>
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-fg-muted)]">
-          冇密碼。輸入你嘅 email，會收到一條 magic link，撳一下就登入。
+          冇密碼。輸入你嘅 email，會收到一組 6 位數登入 code。
         </p>
       </header>
 
       <LoginForm />
 
       <p className="mt-10 text-[12px] leading-relaxed text-[var(--color-fg-subtle)]">
-        Magic link 有效 1 小時。登入後 session 維持 30 日，phone 加 home screen 之後唔使再 login。
+        Code 有效 1 小時。Email 入面如果見到 magic link，先唔好撳，直接返嚟輸入 code 最穩。
       </p>
     </div>
   );

@@ -7,12 +7,12 @@ function isPublic(path: string): boolean {
   return PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const path = request.nextUrl.pathname;
 
-  // Env not configured → /setup is reachable, everything else redirects to it
+  // Env not configured -> /setup is reachable, everything else redirects to it.
   if (!url || !anonKey) {
     if (path === "/setup") return NextResponse.next();
     return NextResponse.redirect(new URL("/setup", request.url));
@@ -41,12 +41,12 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Authenticated user hitting /login → punt to /today
+  // Authenticated user hitting /login -> punt to /today.
   if (user && (path === "/login" || path === "/")) {
     return NextResponse.redirect(new URL("/today", request.url));
   }
 
-  // Unauthenticated user on protected path → /login
+  // Unauthenticated user on protected path -> /login.
   if (!user && !isPublic(path)) {
     const loginUrl = new URL("/login", request.url);
     if (path !== "/") loginUrl.searchParams.set("next", path);
@@ -58,7 +58,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Run on every path EXCEPT static + image + manifest + icon files
+    // Run on every path EXCEPT static + image + manifest + icon files.
     "/((?!_next/static|_next/image|favicon.ico|icon.svg|manifest.webmanifest).*)",
   ],
 };

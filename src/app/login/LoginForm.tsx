@@ -6,10 +6,17 @@ import { getBrowserSupabase } from "@/lib/supabase/browser";
 
 type Step = "email" | "code";
 
+function safeNextPath(value: string | null): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/today";
+  }
+  return value;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") ?? "/today";
+  const next = safeNextPath(params.get("next"));
 
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -64,7 +71,7 @@ export function LoginForm() {
             Email 已寄到 <span className="font-medium text-[var(--color-fg)]">{email}</span>。
             <br />
             入面有 <span className="font-medium text-[var(--color-accent)]">6 位數字</span> code，
-            或者一條 magic link（揀一條方便嘅）。
+            用 code 登入最穩；如果見到 magic link，先唔好撳。
           </p>
         </div>
 
