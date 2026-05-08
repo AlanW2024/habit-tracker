@@ -294,3 +294,66 @@ export async function archiveHabit(habitId: string): Promise<void> {
   revalidatePath("/today");
   revalidatePath("/stats");
 }
+
+const rewardCardInput = z.object({
+  title: z.string().min(1, "請填獎勵名").max(40),
+  copy: z.string().max(160).optional().or(z.literal("")),
+  rarity: z.enum(["common", "rare", "epic", "legendary"]),
+  weight: z.coerce.number().min(0.1).max(50).default(1),
+});
+
+export type RewardCardFormState = {
+  ok: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string>;
+};
+
+export async function createRewardCard(
+  _prev: RewardCardFormState | undefined,
+  formData: FormData,
+): Promise<RewardCardFormState> {
+  const raw = Object.fromEntries(formData);
+  const parsed = rewardCardInput.safeParse(raw);
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      fieldErrors[issue.path.join(".")] = issue.message;
+    }
+    return { ok: false, error: "請修正欄位", fieldErrors };
+  }
+
+  const sb = getServerSupabase();
+  // user-defined cards are tagged via code prefix "u_" so we can list / delete them
+  const code = `u_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+  const copy =
+    parsed.data.copy && parsed.data.copy.trim().length > 0
+      ? parsed.data.copy.trim()
+      : `${parsed.data.title} · 你今日贏到嘅。`;
+
+  const { error } = await sb.from("draw_cards").insert({
+    code,
+    rarity: parsed.data.rarity,
+    title: parsed.data.title,
+    copy,
+    weight: parsed.data.weight,
+  });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/rewards");
+  return { ok: true };
+}
+
+export async function deleteRewardCard(cardId: string): Promise<void> {
+  const sb = getServerSupabase();
+  // Only allow deleting user-defined cards (code starts with 'u_')
+  const { data: card } = await sb
+    .from("draw_cards")
+    .select("code")
+    .eq("id", cardId)
+    .single();
+  if (!card || !card.code?.startsWith("u_")) {
+    throw new Error("呢張係系統卡，唔可以刪");
+  }
+  await sb.from("draw_cards").delete().eq("id", cardId);
+  revalidatePath("/rewards");
+}

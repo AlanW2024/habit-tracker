@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Home, Sparkles } from "lucide-react";
+import { CalendarDays, Home, Layers, Sparkles } from "lucide-react";
 
 const TABS = [
   { href: "/today", label: "今日", icon: Home },
   { href: "/calendar", label: "月曆", icon: CalendarDays },
+  { href: "/rewards", label: "牌庫", icon: Layers },
   { href: "/stats", label: "成長", icon: Sparkles },
 ];
 

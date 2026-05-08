@@ -97,6 +97,17 @@ export async function getMonthLogs(
   return (data ?? []) as HabitLog[];
 }
 
+export async function getAllCards(): Promise<DrawCard[]> {
+  const sb = getServerSupabase();
+  const { data, error } = await sb
+    .from("draw_cards")
+    .select("*")
+    .order("rarity", { ascending: true })
+    .order("code", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as DrawCard[];
+}
+
 export async function getRecentDraws(limit = 12): Promise<
   Array<DrawLog & { card: DrawCard }>
 > {

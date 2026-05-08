@@ -394,7 +394,10 @@ export function DrawRitual({
                     <div className="front-action">
                       <button
                         type="button"
-                        onClick={onClose}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onClose();
+                        }}
                         className="btn-primary w-full"
                       >
                         收下
@@ -496,6 +499,15 @@ export function DrawRitual({
         }
         .flip-card.is-flipped {
           transform: rotateY(180deg);
+        }
+        /* Once flipped, the back face must not intercept clicks meant for
+           the front face (some browsers ignore backface-visibility for hit
+           testing on disabled buttons). */
+        .flip-card.is-flipped .flip-back {
+          pointer-events: none;
+        }
+        .flip-front {
+          pointer-events: auto;
         }
 
         .flip-face {

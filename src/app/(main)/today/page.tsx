@@ -35,7 +35,7 @@ export default async function TodayPage() {
           />
         </div>
         <p className="mt-1 text-[11px] text-[var(--color-fg-subtle)]">
-          {inLevelXp} / {needed} XP
+          {inLevelXp} / {needed} XP · 升級換新 identity title
         </p>
       </header>
 
