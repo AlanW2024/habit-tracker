@@ -1,32 +1,194 @@
 @import "tailwindcss";
 
+/* ────────────────────────────────────────────────────────────────────────────
+   1% Discipline · design tokens (v2, post-audit)
+   ──────────────────────────────────────────────────────────────────────────── */
+
 @theme {
-  --color-bg: #0a0a0c;
-  --color-bg-elevated: #131316;
-  --color-bg-card: #17171b;
-  --color-border: #26262c;
-  --color-border-strong: #3a3a42;
+  /* Tailwind v4 universal tokens (spacing, radii, type scale, font families).
+     Per-theme colors live in :root[data-theme=...] cascade below — Tailwind
+     consumes them via `bg-[var(--color-...)]` arbitrary values. */
+  --font-sans: var(--font-body), "Nunito", "Helvetica Neue", system-ui, sans-serif;
+  --font-display: var(--font-display-google), "Space Grotesk", "Nunito", system-ui, sans-serif;
 
-  --color-fg: #f5f1eb;
-  --color-fg-muted: #a8a39c;
-  --color-fg-subtle: #6b6862;
-
-  --color-accent: #fbbf24;
-  --color-accent-hover: #f59e0b;
-  --color-accent-soft: rgba(251, 191, 36, 0.12);
-
-  --color-mint: #5eead4;
-  --color-mint-soft: rgba(94, 234, 212, 0.12);
-
-  --color-rose: #fb7185;
-  --color-rose-soft: rgba(251, 113, 133, 0.10);
-
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "PingFang TC",
-    "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-
-  --radius-card: 18px;
-  --radius-button: 12px;
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
 }
+
+:root {
+  /* Spacing scale — 4px grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Radii (also exposed via @theme above) */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* Type scale */
+  --type-caption: 11px;
+  --type-label: 13px;
+  --type-body: 15px;
+  --type-body-lg: 17px;
+  --type-h3: 22px;
+  --type-h2: 28px;
+  --type-h1: 36px;
+  --type-display: 64px;
+
+  /* Shadows */
+  --shadow-chunky: inset 0 -4px 0 rgba(0, 0, 0, 0.15);
+  --shadow-subtle: inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+  --shadow-lift: 0 8px 20px rgba(26, 20, 16, 0.10);
+  --shadow-pop-light: 0 1px 0 rgba(26, 20, 16, 0.04);
+
+  /* Default = light theme tokens */
+  --color-bg: #FFF8F0;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F5EFE6;
+  --color-text: #1A1410;
+  --color-muted: #5C5048;
+  --color-muted-strong: #2D2520;
+  --color-border: rgba(26, 20, 16, 0.08);
+  --color-success: #5C9F22;
+  --color-warning: #B8860B;
+  --color-danger: #C73B4A;
+  --color-info: #2D6FF0;
+  --color-flame: #E55A2B;
+  --color-on-primary-strong: #FFFCF5;
+  --color-on-primary-subtle: #1A1410;
+
+  color-scheme: light;
+}
+
+/* ── Explicit dark theme (cookie theme=dark) ─────────────────────────────── */
+:root[data-theme="dark"] {
+  --color-bg: #0F0E1A;
+  --color-surface: #1B1A2E;
+  --color-surface-alt: #252339;
+  --color-text: #FFFCF5;
+  --color-muted: rgba(255, 252, 245, 0.68);
+  --color-muted-strong: rgba(255, 252, 245, 0.82);
+  --color-border: rgba(255, 255, 255, 0.10);
+  --color-success: #84CC16;
+  --color-warning: #FACC15;
+  --color-danger: #FF5470;
+  --color-info: #5C8DF5;
+  --color-flame: #FF8A4C;
+  --color-on-primary-strong: #FFFCF5;
+  --color-on-primary-subtle: rgba(255, 252, 245, 0.85);
+  color-scheme: dark;
+}
+
+/* ── System theme follows OS preference ──────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    --color-bg: #0F0E1A;
+    --color-surface: #1B1A2E;
+    --color-surface-alt: #252339;
+    --color-text: #FFFCF5;
+    --color-muted: rgba(255, 252, 245, 0.68);
+    --color-muted-strong: rgba(255, 252, 245, 0.82);
+    --color-border: rgba(255, 255, 255, 0.10);
+    --color-success: #84CC16;
+    --color-warning: #FACC15;
+    --color-danger: #FF5470;
+    --color-info: #5C8DF5;
+    --color-flame: #FF8A4C;
+    --color-on-primary-strong: #FFFCF5;
+    --color-on-primary-subtle: rgba(255, 252, 245, 0.85);
+    color-scheme: dark;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Accent palette — independent of light/dark.
+   Each accent has primary + primarySoft tokens. Dark variant pairs override
+   on [data-theme="dark"] AND on [data-theme="system"] when OS is dark.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* Tangerine (default) */
+:root,
+:root[data-accent="tangerine"] {
+  --color-primary: #FF6B3D;
+  --color-primary-soft: #FFE4D6;
+}
+:root[data-theme="dark"][data-accent="tangerine"],
+:root[data-theme="dark"]:not([data-accent]) {
+  --color-primary: #FF7E55;
+  --color-primary-soft: #3A2418;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"][data-accent="tangerine"],
+  :root[data-theme="system"]:not([data-accent]) {
+    --color-primary: #FF7E55;
+    --color-primary-soft: #3A2418;
+  }
+}
+
+/* Grape */
+:root[data-accent="grape"] {
+  --color-primary: #7C3AED;
+  --color-primary-soft: #EDE3FE;
+}
+:root[data-theme="dark"][data-accent="grape"] {
+  --color-primary: #9B6BFF;
+  --color-primary-soft: #241638;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"][data-accent="grape"] {
+    --color-primary: #9B6BFF;
+    --color-primary-soft: #241638;
+  }
+}
+
+/* Lime */
+:root[data-accent="lime"] {
+  --color-primary: #5C9F22;
+  --color-primary-soft: #E1F5C8;
+}
+:root[data-theme="dark"][data-accent="lime"] {
+  --color-primary: #84CC16;
+  --color-primary-soft: #1B2A0E;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"][data-accent="lime"] {
+    --color-primary: #84CC16;
+    --color-primary-soft: #1B2A0E;
+  }
+}
+
+/* Cobalt */
+:root[data-accent="cobalt"] {
+  --color-primary: #2D6FF0;
+  --color-primary-soft: #DCE7FE;
+}
+:root[data-theme="dark"][data-accent="cobalt"] {
+  --color-primary: #5C8DF5;
+  --color-primary-soft: #0E1F3D;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"][data-accent="cobalt"] {
+    --color-primary: #5C8DF5;
+    --color-primary-soft: #0E1F3D;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Base element styles
+   ──────────────────────────────────────────────────────────────────────────── */
 
 * {
   -webkit-tap-highlight-color: transparent;
@@ -35,9 +197,8 @@
 html,
 body {
   background: var(--color-bg);
-  color: var(--color-fg);
+  color: var(--color-text);
   font-family: var(--font-sans);
-  font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -48,77 +209,76 @@ body {
   overscroll-behavior-y: contain;
 }
 
-.surface-card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-}
+/* ────────────────────────────────────────────────────────────────────────────
+   Legacy utility classes — kept for the few places not yet ported.
+   The new design system uses inline styles + CSS vars directly.
+   ──────────────────────────────────────────────────────────────────────────── */
 
-.surface-elevated {
-  background: var(--color-bg-elevated);
+.surface-card {
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
 }
 
 .btn-primary {
-  background: var(--color-accent);
-  color: #1a1100;
-  border-radius: var(--radius-button);
-  font-weight: 600;
-  padding: 0.875rem 1.25rem;
-  transition: transform 80ms ease, background 120ms ease;
+  background: var(--color-primary);
+  color: var(--color-on-primary-strong);
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  padding: 14px 22px;
+  box-shadow: var(--shadow-chunky);
+  transition: transform 80ms ease, opacity 120ms ease;
 }
 .btn-primary:active {
   transform: scale(0.97);
-  background: var(--color-accent-hover);
 }
 .btn-primary:disabled {
-  opacity: 0.4;
+  opacity: 0.5;
   pointer-events: none;
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--color-fg);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-button);
-  padding: 0.75rem 1rem;
+  color: var(--color-text);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 10px 18px;
+  font-weight: 700;
 }
 
 .input-field {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-button);
-  color: var(--color-fg);
-  padding: 0.75rem 0.875rem;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  padding: 12px 14px;
   width: 100%;
-  font-size: 1rem;
+  font-size: var(--type-body);
 }
 .input-field::placeholder {
-  color: var(--color-fg-subtle);
+  color: var(--color-muted);
+  opacity: 0.7;
 }
 .input-field:focus {
   outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-soft);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
 }
 
 .heat-cell {
   aspect-ratio: 1;
-  border-radius: 6px;
-  background: var(--color-bg-elevated);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-alt);
   border: 1px solid var(--color-border);
 }
 
 .complete-ring {
-  box-shadow: 0 0 0 0 var(--color-accent);
+  box-shadow: 0 0 0 0 var(--color-primary);
   animation: ring 600ms ease-out;
 }
 @keyframes ring {
-  0% {
-    box-shadow: 0 0 0 0 var(--color-accent);
-  }
-  100% {
-    box-shadow: 0 0 0 18px transparent;
-  }
+  0% { box-shadow: 0 0 0 0 var(--color-primary); }
+  100% { box-shadow: 0 0 0 18px transparent; }
 }
 
 .safe-bottom {
