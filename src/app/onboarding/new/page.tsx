@@ -2,45 +2,95 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getActiveHabits } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { ChunkyButton } from "@/components/ui/ChunkyButton";
+import { getDict } from "@/i18n";
 import { NewHabitForm } from "./new-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewHabitPage() {
   if (!isSupabaseConfigured()) redirect("/setup");
-  const habits = await getActiveHabits();
+  const [habits, dict] = await Promise.all([getActiveHabits(), getDict()]);
   const atCap = habits.length >= 2;
 
   return (
     <div className="mx-auto min-h-screen max-w-md px-5 pb-24 pt-6 safe-top">
       <Link
         href="/today"
-        className="text-xs text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+        style={{
+          fontSize: 12,
+          color: "var(--color-muted)",
+          textDecoration: "none",
+        }}
       >
-        ← 返今日
+        {dict.onboarding.back_to_today}
       </Link>
       <header className="mt-4 mb-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-[var(--color-fg-subtle)]">
-          NEW HABIT
+        <p
+          style={{
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: "var(--color-muted)",
+          }}
+        >
+          {dict.onboarding.section_label}
         </p>
-        <h1 className="mt-1 text-3xl font-semibold leading-tight">
-          選一個 tiny version
+        <h1
+          style={{
+            marginTop: 4,
+            fontFamily:
+              "var(--font-display), Space Grotesk, system-ui, sans-serif",
+            fontSize: 30,
+            fontWeight: 700,
+            color: "var(--color-text)",
+            letterSpacing: -1,
+          }}
+        >
+          {dict.onboarding.title}
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--color-fg-muted)]">
-          唔好諗大事。寫 1 行 code、讀 1 頁書、做 1 個 push-up。BJ Fogg：
-          tiny first，再慢慢加長。
+        <p
+          style={{
+            marginTop: 8,
+            fontSize: 14,
+            color: "var(--color-muted)",
+            lineHeight: 1.6,
+          }}
+        >
+          {dict.onboarding.subtitle}
         </p>
       </header>
 
       {atCap ? (
         <div className="surface-card px-5 py-6">
-          <h2 className="text-lg font-semibold">已達 Day 1 cap：2 個</h2>
-          <p className="mt-2 text-sm text-[var(--color-fg-muted)]">
-            研究共識：頭 21 日只練 1-2 個 habit。21 日後系統會 unlock 加 habit。
-            而家專注呢兩個。
+          <h2
+            style={{
+              fontFamily:
+                "var(--font-display), Space Grotesk, system-ui, sans-serif",
+              fontSize: 20,
+              fontWeight: 700,
+              color: "var(--color-text)",
+            }}
+          >
+            {dict.onboarding.at_cap_title}
+          </h2>
+          <p
+            style={{
+              marginTop: 8,
+              fontSize: 14,
+              color: "var(--color-muted)",
+              lineHeight: 1.6,
+              whiteSpace: "pre-line",
+            }}
+          >
+            {dict.onboarding.at_cap_body}
           </p>
-          <Link href="/today" className="btn-primary mt-5 inline-block">
-            返今日
+          <Link
+            href="/today"
+            style={{ display: "inline-block", marginTop: 18, textDecoration: "none" }}
+          >
+            <ChunkyButton>{dict.onboarding.back_button}</ChunkyButton>
           </Link>
         </div>
       ) : (

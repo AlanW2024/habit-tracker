@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getBrowserSupabase } from "@/lib/supabase/browser";
+import { ChunkyButton } from "@/components/ui/ChunkyButton";
+import { useDict } from "@/i18n/Provider";
 
 type Step = "email" | "code";
 
@@ -17,6 +19,7 @@ export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = safeNextPath(params.get("next"));
+  const dict = useDict();
 
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -47,7 +50,7 @@ export function LoginForm() {
 
   async function handleSendCode(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await sendCode("Code 已寄出。請開新 email，複製 6 位數字返嚟。");
+    await sendCode(dict.login.code_sent);
   }
 
   async function handleVerifyCode(event: React.FormEvent<HTMLFormElement>) {
@@ -64,7 +67,7 @@ export function LoginForm() {
     });
     setPending(false);
     if (verifyError) {
-      setError("Code 過期或已被用過。請重新寄 code，再用最新 email 入面嘅 6 位數字。");
+      setError(dict.login.code_expired);
       return;
     }
     router.replace(next);
@@ -75,16 +78,26 @@ export function LoginForm() {
     return (
       <form onSubmit={handleVerifyCode} className="flex flex-col gap-4">
         <div className="surface-card px-5 py-4">
-          <p className="text-sm leading-relaxed text-[var(--color-fg-muted)]">
-            Email 已寄到 <span className="font-medium text-[var(--color-fg)]">{email}</span>。
-            <br />
-            入面有 <span className="font-medium text-[var(--color-accent)]">6 位數字</span> code，
-            用 code 登入最穩；如果見到 magic link，先唔好撳。
+          <p
+            style={{
+              fontSize: 14,
+              color: "var(--color-muted)",
+              lineHeight: 1.6,
+              whiteSpace: "pre-line",
+            }}
+          >
+            {dict.login.magic_link_warning_pre}
+            <span style={{ fontWeight: 700, color: "var(--color-text)" }}>
+              {email}
+            </span>
+            {dict.login.magic_link_warning_post}
           </p>
         </div>
 
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">6 位數 code</span>
+          <span className="mb-1.5 block text-sm font-medium">
+            {dict.login.code_label}
+          </span>
           <input
             type="text"
             inputMode="numeric"
@@ -94,51 +107,77 @@ export function LoginForm() {
             required
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            placeholder="123456"
+            placeholder={dict.login.code_placeholder}
             className="input-field tracking-[0.5em] text-center text-xl"
           />
         </label>
 
         {error && (
-          <p className="rounded-[12px] border border-[var(--color-rose)] bg-[var(--color-rose-soft)] px-3 py-2 text-sm text-[var(--color-rose)]">
+          <p
+            style={{
+              borderRadius: 12,
+              border: "1.5px solid var(--color-danger)",
+              background: "color-mix(in srgb, var(--color-danger) 12%, transparent)",
+              padding: "10px 12px",
+              fontSize: 14,
+              color: "var(--color-danger)",
+            }}
+          >
             {error}
           </p>
         )}
 
         {notice && !error && (
-          <p className="rounded-[12px] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-fg-muted)]">
+          <p
+            style={{
+              borderRadius: 12,
+              border: "1.5px solid var(--color-border)",
+              background: "var(--color-surface)",
+              padding: "10px 12px",
+              fontSize: 14,
+              color: "var(--color-muted)",
+            }}
+          >
             {notice}
           </p>
         )}
 
-        <button
+        <ChunkyButton
           type="submit"
-          className="btn-primary"
+          full
           disabled={pending || code.length !== 6}
         >
-          {pending ? "驗證中..." : "登入"}
-        </button>
+          {pending ? dict.login.verifying : dict.login.verify}
+        </ChunkyButton>
 
         <div className="flex items-center justify-center gap-4">
           <button
             type="button"
-            className="text-[12px] text-[var(--color-fg-subtle)] underline"
             disabled={pending}
-            onClick={() => sendCode("新 code 已寄出。只用最新 email 入面嘅 6 位數字。")}
+            onClick={() => sendCode(dict.login.code_sent_again)}
+            style={{
+              fontSize: 12,
+              color: "var(--color-muted)",
+              textDecoration: "underline",
+            }}
           >
-            重新寄 code
+            {dict.login.resend}
           </button>
           <button
             type="button"
-            className="text-[12px] text-[var(--color-fg-subtle)] underline"
             onClick={() => {
               setStep("email");
               setCode("");
               setError(null);
               setNotice(null);
             }}
+            style={{
+              fontSize: 12,
+              color: "var(--color-muted)",
+              textDecoration: "underline",
+            }}
           >
-            用第二個 email
+            {dict.login.use_other_email}
           </button>
         </div>
       </form>
@@ -148,7 +187,9 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSendCode} className="flex flex-col gap-4">
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Email</span>
+        <span className="mb-1.5 block text-sm font-medium">
+          {dict.login.email_label}
+        </span>
         <input
           type="email"
           inputMode="email"
@@ -156,26 +197,44 @@ export function LoginForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
+          placeholder={dict.login.email_placeholder}
           className="input-field"
         />
       </label>
 
       {error && (
-        <p className="rounded-[12px] border border-[var(--color-rose)] bg-[var(--color-rose-soft)] px-3 py-2 text-sm text-[var(--color-rose)]">
+        <p
+          style={{
+            borderRadius: 12,
+            border: "1.5px solid var(--color-danger)",
+            background: "color-mix(in srgb, var(--color-danger) 12%, transparent)",
+            padding: "10px 12px",
+            fontSize: 14,
+            color: "var(--color-danger)",
+          }}
+        >
           {error}
         </p>
       )}
 
       {notice && !error && (
-        <p className="rounded-[12px] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-fg-muted)]">
+        <p
+          style={{
+            borderRadius: 12,
+            border: "1.5px solid var(--color-border)",
+            background: "var(--color-surface)",
+            padding: "10px 12px",
+            fontSize: 14,
+            color: "var(--color-muted)",
+          }}
+        >
           {notice}
         </p>
       )}
 
-      <button type="submit" className="btn-primary" disabled={pending || !email.trim()}>
-        {pending ? "傳送中..." : "寄登入 code"}
-      </button>
+      <ChunkyButton type="submit" full disabled={pending || !email.trim()}>
+        {pending ? dict.login.sending : dict.login.send_code}
+      </ChunkyButton>
     </form>
   );
 }

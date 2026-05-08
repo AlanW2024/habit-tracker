@@ -2,93 +2,167 @@
 
 import { useActionState, useState } from "react";
 import { createHabit, type HabitFormState } from "@/lib/actions";
+import { ChunkyButton } from "@/components/ui/ChunkyButton";
+import { useDict } from "@/i18n/Provider";
+import type { Dict } from "@/i18n";
 
-const TYPE_HINTS: Record<string, string> = {
-  daily_must: "每日必達。最少做 tiny version。漏一日 OK，漏兩日會出 alert。",
-  weekly_target: "每週達標 X/7 即達標。對唔係日日做嘅事比較人性。",
-};
+type HabitType = "daily_must" | "weekly_target";
+type HabitDifficulty = "tiny" | "normal" | "stretch";
 
-const PRESETS = [
+interface Preset {
+  nameKey: keyof Dict["onboarding"];
+  unitKey: keyof Dict["onboarding"];
+  ifThenKey: keyof Dict["onboarding"];
+  target: number;
+}
+
+const PRESETS: readonly Preset[] = [
   {
-    name: "Vibe coding",
+    nameKey: "preset_vibe_name",
+    unitKey: "preset_vibe_unit",
+    ifThenKey: "preset_vibe_if_then",
     target: 10,
-    unit: "分鐘",
-    if_then: "食完早餐 → 開 IDE 寫 1 行 code（喺書枱）",
   },
   {
-    name: "閱讀",
+    nameKey: "preset_read_name",
+    unitKey: "preset_read_unit",
+    ifThenKey: "preset_read_if_then",
     target: 1,
-    unit: "頁",
-    if_then: "瞓前 → 讀 1 頁紙本書（喺床頭櫃）",
   },
+] as const;
+
+const DIFFICULTY_OPTIONS: readonly HabitDifficulty[] = [
+  "tiny",
+  "normal",
+  "stretch",
 ];
 
 export function NewHabitForm() {
+  const dict = useDict();
   const [state, action, pending] = useActionState<HabitFormState, FormData>(
     createHabit,
     { ok: false },
   );
-  const [type, setType] = useState<"daily_must" | "weekly_target">("daily_must");
+  const [type, setType] = useState<HabitType>("daily_must");
+  const [difficulty, setDifficulty] = useState<HabitDifficulty>("tiny");
+
+  const fillPreset = (preset: Preset) => {
+    const set = (id: string, value: string) => {
+      const el = document.querySelector(`[name="${id}"]`) as
+        | HTMLInputElement
+        | HTMLTextAreaElement
+        | null;
+      if (el) el.value = value;
+    };
+    set("name", dict.onboarding[preset.nameKey]);
+    set("target_qty", String(preset.target));
+    set("unit", dict.onboarding[preset.unitKey]);
+    set("if_then", dict.onboarding[preset.ifThenKey]);
+  };
 
   return (
     <form action={action} className="flex flex-col gap-5">
       <div>
-        <p className="mb-2 text-xs text-[var(--color-fg-muted)]">快速開始</p>
-        <div className="flex flex-wrap gap-2">
+        <p
+          style={{
+            marginBottom: 8,
+            fontSize: 12,
+            fontWeight: 700,
+            color: "var(--color-muted)",
+          }}
+        >
+          {dict.onboarding.form_quick_start}
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {PRESETS.map((p) => (
             <button
-              key={p.name}
+              key={p.nameKey}
               type="button"
-              onClick={() => fillFromPreset(p)}
-              className="btn-ghost text-sm"
+              onClick={() => fillPreset(p)}
+              style={{
+                background: "var(--color-primary-soft)",
+                color: "var(--color-primary)",
+                border: "none",
+                borderRadius: 999,
+                padding: "8px 14px",
+                fontFamily: "var(--font-body), Nunito, system-ui, sans-serif",
+                fontSize: 13,
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
             >
-              {p.name}
+              {dict.onboarding[p.nameKey]}
             </button>
           ))}
         </div>
       </div>
 
-      <Field label="習慣名稱" name="name" error={state.fieldErrors?.name}>
+      <Field label={dict.onboarding.form_name_label} name="name" error={state.fieldErrors?.name}>
         <input
           name="name"
           required
           maxLength={40}
-          placeholder="例如：Vibe coding"
+          placeholder={dict.onboarding.form_name_placeholder}
           className="input-field"
         />
       </Field>
 
       <div>
-        <span className="mb-2 block text-sm font-medium">類型</span>
-        <div className="grid grid-cols-2 gap-2">
-          {(["daily_must", "weekly_target"] as const).map((t) => (
-            <label
-              key={t}
-              className={`surface-card cursor-pointer px-3 py-3 text-sm ${
-                type === t ? "ring-2 ring-[var(--color-accent)]" : ""
-              }`}
-            >
-              <input
-                type="radio"
-                name="type"
-                value={t}
-                checked={type === t}
-                onChange={() => setType(t)}
-                className="sr-only"
-              />
-              <span className="font-medium">
-                {t === "daily_must" ? "每日必達" : "每週達標"}
-              </span>
-            </label>
-          ))}
+        <span className="mb-2 block text-sm font-medium">
+          {dict.onboarding.form_type_label}
+        </span>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {(["daily_must", "weekly_target"] as const).map((t) => {
+            const active = type === t;
+            return (
+              <label
+                key={t}
+                style={{
+                  background: active
+                    ? "var(--color-primary-soft)"
+                    : "var(--color-surface)",
+                  color: active ? "var(--color-primary)" : "var(--color-text)",
+                  border: `1.5px solid ${active ? "var(--color-primary)" : "var(--color-border)"}`,
+                  borderRadius: 16,
+                  padding: "12px 14px",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-body), Nunito, system-ui, sans-serif",
+                  fontSize: 14,
+                  fontWeight: 800,
+                  textAlign: "center",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="type"
+                  value={t}
+                  checked={active}
+                  onChange={() => setType(t)}
+                  className="sr-only"
+                />
+                {t === "daily_must"
+                  ? dict.onboarding.form_type_daily
+                  : dict.onboarding.form_type_weekly}
+              </label>
+            );
+          })}
         </div>
-        <p className="mt-2 text-[12px] leading-relaxed text-[var(--color-fg-muted)]">
-          {TYPE_HINTS[type]}
+        <p
+          style={{
+            marginTop: 8,
+            fontSize: 12,
+            color: "var(--color-muted)",
+            lineHeight: 1.6,
+          }}
+        >
+          {type === "daily_must"
+            ? dict.onboarding.form_type_hint_daily
+            : dict.onboarding.form_type_hint_weekly}
         </p>
       </div>
 
       {type === "weekly_target" && (
-        <Field label="每週目標 (天)" name="weekly_goal">
+        <Field label={dict.onboarding.form_weekly_goal_label} name="weekly_goal">
           <input
             type="number"
             name="weekly_goal"
@@ -104,9 +178,8 @@ export function NewHabitForm() {
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="目標數量" name="target_qty">
+        <Field label={dict.onboarding.form_target_qty_label} name="target_qty">
           <input
-            id="target_qty"
             type="number"
             name="target_qty"
             min={1}
@@ -116,9 +189,8 @@ export function NewHabitForm() {
             className="input-field"
           />
         </Field>
-        <Field label="單位" name="unit">
+        <Field label={dict.onboarding.form_unit_label} name="unit">
           <input
-            id="unit"
             name="unit"
             maxLength={8}
             defaultValue="次"
@@ -129,96 +201,124 @@ export function NewHabitForm() {
       </div>
 
       <Field
-        label="If-Then（強制）"
+        label={dict.onboarding.form_if_then_label}
         name="if_then"
         error={state.fieldErrors?.if_then}
-        hint="格式：「After ___, I will ___ at ___」。Gollwitzer 研究：填咗呢條，達標率高 60%。"
+        hint={dict.onboarding.form_if_then_hint}
       >
         <textarea
-          id="if_then"
           name="if_then"
           required
           minLength={6}
           maxLength={200}
           rows={2}
-          placeholder="食完早餐 → 開 IDE 寫 1 行 code（喺書枱）"
+          placeholder={dict.onboarding.form_if_then_placeholder}
           className="input-field"
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="難度（建議 tiny）" name="difficulty">
-          <select name="difficulty" defaultValue="tiny" className="input-field">
-            <option value="tiny">tiny</option>
-            <option value="normal">normal</option>
-            <option value="stretch">stretch</option>
-          </select>
-        </Field>
-        <Field label="提示時間（可選）" name="cue_time">
-          <input
-            type="time"
-            name="cue_time"
-            className="input-field"
-          />
-        </Field>
+      <div>
+        <span className="mb-2 block text-sm font-medium">
+          {dict.onboarding.form_difficulty_label}
+        </span>
+        <div style={{ display: "flex", gap: 8 }}>
+          {DIFFICULTY_OPTIONS.map((d) => {
+            const active = difficulty === d;
+            return (
+              <label
+                key={d}
+                style={{
+                  flex: 1,
+                  background: active
+                    ? "var(--color-primary-soft)"
+                    : "var(--color-surface)",
+                  color: active ? "var(--color-primary)" : "var(--color-text)",
+                  border: `1.5px solid ${active ? "var(--color-primary)" : "var(--color-border)"}`,
+                  borderRadius: 999,
+                  padding: "8px 14px",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-body), Nunito, system-ui, sans-serif",
+                  fontSize: 13,
+                  fontWeight: 800,
+                  textAlign: "center",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="difficulty"
+                  value={d}
+                  checked={active}
+                  onChange={() => setDifficulty(d)}
+                  className="sr-only"
+                />
+                {d}
+              </label>
+            );
+          })}
+        </div>
       </div>
 
+      <Field label={dict.onboarding.form_cue_time_label} name="cue_time">
+        <input type="time" name="cue_time" className="input-field" />
+      </Field>
+
       {state.error && !state.fieldErrors && (
-        <p className="rounded-[12px] border border-[var(--color-rose)] bg-[var(--color-rose-soft)] px-3 py-2 text-sm text-[var(--color-rose)]">
+        <p
+          style={{
+            borderRadius: 12,
+            border: "1.5px solid var(--color-danger)",
+            background:
+              "color-mix(in srgb, var(--color-danger) 12%, transparent)",
+            padding: "10px 12px",
+            fontSize: 14,
+            color: "var(--color-danger)",
+          }}
+        >
           {state.error}
         </p>
       )}
 
-      <button type="submit" className="btn-primary mt-2" disabled={pending}>
-        {pending ? "建立中..." : "建立 habit"}
-      </button>
+      <ChunkyButton type="submit" full disabled={pending}>
+        {pending ? dict.onboarding.form_submitting : dict.onboarding.form_submit}
+      </ChunkyButton>
     </form>
   );
 }
 
-function fillFromPreset(p: {
-  name: string;
-  target: number;
-  unit: string;
-  if_then: string;
-}) {
-  const set = (id: string, value: string) => {
-    const el = document.querySelector(`[name="${id}"]`) as
-      | HTMLInputElement
-      | HTMLTextAreaElement
-      | null;
-    if (el) el.value = value;
-  };
-  set("name", p.name);
-  set("target_qty", String(p.target));
-  set("unit", p.unit);
-  set("if_then", p.if_then);
-}
-
-function Field({
-  label,
-  name,
-  hint,
-  error,
-  children,
-}: {
+interface FieldProps {
   label: string;
   name: string;
   hint?: string;
   error?: string;
   children: React.ReactNode;
-}) {
+}
+
+function Field({ label, name, hint, error, children }: FieldProps) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium">{label}</span>
       {children}
       {hint && (
-        <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--color-fg-subtle)]">
+        <p
+          style={{
+            marginTop: 6,
+            fontSize: 12,
+            color: "var(--color-muted)",
+            lineHeight: 1.6,
+          }}
+        >
           {hint}
         </p>
       )}
       {error && (
-        <p className="mt-1 text-[12px] text-[var(--color-rose)]" data-field={name}>
+        <p
+          style={{
+            marginTop: 4,
+            fontSize: 12,
+            color: "var(--color-danger)",
+          }}
+          data-field={name}
+        >
           {error}
         </p>
       )}

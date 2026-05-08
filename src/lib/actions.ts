@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getServerSupabase } from "./supabase/server";
 import { SELF_USER_ID } from "./supabase/config";
+import { getDict } from "@/i18n";
 import {
   RARITY_WEIGHTS,
   RARITY_XP_BONUS,
@@ -21,6 +22,9 @@ export interface DrawResult {
   xpBonus: number;
 }
 
+// Note: zod messages here are standard Mandarin (no Cantonese particles).
+// The dict mirrors them in errors.* keys; if we ever switch to per-locale
+// validation messages, route them through getDict() at parse time.
 const habitInput = z.object({
   name: z.string().min(1, "請填習慣名稱").max(40),
   type: z.enum(["daily_must", "weekly_target"]),
@@ -45,6 +49,7 @@ export async function createHabit(
   _prev: HabitFormState | undefined,
   formData: FormData,
 ): Promise<HabitFormState> {
+  const dict = await getDict();
   const raw = Object.fromEntries(formData);
   const parsed = habitInput.safeParse(raw);
   if (!parsed.success) {
@@ -52,7 +57,7 @@ export async function createHabit(
     for (const issue of parsed.error.issues) {
       fieldErrors[issue.path.join(".")] = issue.message;
     }
-    return { ok: false, error: "請修正欄位", fieldErrors };
+    return { ok: false, error: dict.errors.fix_fields, fieldErrors };
   }
 
   const sb = await getServerSupabase();
@@ -65,7 +70,7 @@ export async function createHabit(
   if ((count ?? 0) >= 2) {
     return {
       ok: false,
-      error: "Day 1 cap：最多 2 個 habit。21 日後可以解鎖加。",
+      error: dict.errors.habit_cap_day1,
     };
   }
 
@@ -168,7 +173,7 @@ export async function completeHabit(
   }
 
   // 抽卡 deferred to client ritual — see drawCard() below.
-  // 唔再喺 server 自動抽，畀用戶親手揭牌嘅 dopamine peak。
+  // 不在 server 自動抽，留給用戶親手揭牌的 dopamine peak。
   const trigger: CompleteResult["trigger"] = streakBonus
     ? "streak_milestone"
     : weeklyBonus
@@ -176,7 +181,6 @@ export async function completeHabit(
       : "daily_complete";
 
   revalidatePath("/today");
-  revalidatePath("/calendar");
   revalidatePath("/stats");
 
   return { ok: true, shouldDraw: true, streakBonus, weeklyBonus, trigger };
@@ -308,6 +312,10 @@ const rewardCardInput = z.object({
   weight: z.coerce.number().min(0.1).max(50).default(1),
 });
 
+function autoCardCopy(title: string): string {
+  return `${title} · 你今天贏到的。`;
+}
+
 export type RewardCardFormState = {
   ok: boolean;
   error?: string;
@@ -318,6 +326,7 @@ export async function createRewardCard(
   _prev: RewardCardFormState | undefined,
   formData: FormData,
 ): Promise<RewardCardFormState> {
+  const dict = await getDict();
   const raw = Object.fromEntries(formData);
   const parsed = rewardCardInput.safeParse(raw);
   if (!parsed.success) {
@@ -325,7 +334,7 @@ export async function createRewardCard(
     for (const issue of parsed.error.issues) {
       fieldErrors[issue.path.join(".")] = issue.message;
     }
-    return { ok: false, error: "請修正欄位", fieldErrors };
+    return { ok: false, error: dict.errors.fix_fields, fieldErrors };
   }
 
   const sb = await getServerSupabase();
@@ -334,7 +343,7 @@ export async function createRewardCard(
   const copy =
     parsed.data.copy && parsed.data.copy.trim().length > 0
       ? parsed.data.copy.trim()
-      : `${parsed.data.title} · 你今日贏到嘅。`;
+      : autoCardCopy(parsed.data.title);
 
   const { error } = await sb.from("draw_cards").insert({
     code,
@@ -358,7 +367,8 @@ export async function deleteRewardCard(cardId: string): Promise<void> {
     .eq("id", cardId)
     .single();
   if (!card || !card.code?.startsWith("u_")) {
-    throw new Error("呢張係系統卡，唔可以刪");
+    const dict = await getDict();
+    throw new Error(dict.errors.system_card_undeletable);
   }
   await sb.from("draw_cards").delete().eq("id", cardId);
   revalidatePath("/rewards");

@@ -18,7 +18,7 @@ export async function getProfile(): Promise<Profile> {
     .eq("id", SELF_USER_ID)
     .single();
   if (error || !data) {
-    throw new Error(`找唔到 profile (id=${SELF_USER_ID})：${error?.message}`);
+    throw new Error(`找不到 profile (id=${SELF_USER_ID})：${error?.message}`);
   }
   return data as Profile;
 }
@@ -122,10 +122,31 @@ export async function getRecentDraws(limit = 12): Promise<
   return (data ?? []) as Array<DrawLog & { card: DrawCard }>;
 }
 
+export async function getBestStreak(): Promise<number> {
+  const sb = await getServerSupabase();
+  const { data: habits } = await sb
+    .from("habits")
+    .select("id")
+    .eq("user_id", SELF_USER_ID);
+  const ids = (habits ?? []).map((h) => h.id);
+  if (ids.length === 0) return 0;
+  const { data, error } = await sb
+    .from("streak_state")
+    .select("best_streak")
+    .in("habit_id", ids);
+  if (error) throw new Error(error.message);
+  return (data ?? []).reduce(
+    (max: number, row: { best_streak: number }) =>
+      Math.max(max, row.best_streak ?? 0),
+    0,
+  );
+}
+
 export async function getCompletionStats(days = 30): Promise<{
   totalCompletions: number;
   perDay: Record<string, number>;
   topHabit: { name: string; count: number } | null;
+  perHabit: Record<string, { name: string; count: number }>;
 }> {
   const sb = await getServerSupabase();
   const since = new Date();
@@ -141,7 +162,7 @@ export async function getCompletionStats(days = 30): Promise<{
   for (const h of habits ?? []) idToName.set(h.id, h.name);
   const ids = Array.from(idToName.keys());
   if (ids.length === 0) {
-    return { totalCompletions: 0, perDay: {}, topHabit: null };
+    return { totalCompletions: 0, perDay: {}, topHabit: null, perHabit: {} };
   }
 
   const { data, error } = await sb
@@ -152,16 +173,20 @@ export async function getCompletionStats(days = 30): Promise<{
   if (error) throw new Error(error.message);
 
   const perDay: Record<string, number> = {};
-  const perHabit: Record<string, number> = {};
+  const perHabitCount: Record<string, number> = {};
   for (const l of data ?? []) {
     perDay[l.log_date] = (perDay[l.log_date] ?? 0) + 1;
-    perHabit[l.habit_id] = (perHabit[l.habit_id] ?? 0) + 1;
+    perHabitCount[l.habit_id] = (perHabitCount[l.habit_id] ?? 0) + 1;
+  }
+  const perHabit: Record<string, { name: string; count: number }> = {};
+  for (const [hid, count] of Object.entries(perHabitCount)) {
+    perHabit[hid] = { name: idToName.get(hid) ?? "未命名", count };
   }
   let topHabit: { name: string; count: number } | null = null;
-  for (const [hid, count] of Object.entries(perHabit)) {
-    if (!topHabit || count > topHabit.count) {
-      topHabit = { name: idToName.get(hid) ?? "未命名", count };
+  for (const entry of Object.values(perHabit)) {
+    if (!topHabit || entry.count > topHabit.count) {
+      topHabit = entry;
     }
   }
-  return { totalCompletions: data?.length ?? 0, perDay, topHabit };
+  return { totalCompletions: data?.length ?? 0, perDay, topHabit, perHabit };
 }

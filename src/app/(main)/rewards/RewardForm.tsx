@@ -2,67 +2,102 @@
 
 import { useActionState, useState } from "react";
 import { createRewardCard, type RewardCardFormState } from "@/lib/actions";
+import { ChunkyButton } from "@/components/ui/ChunkyButton";
+import { useDict } from "@/i18n/Provider";
+import type { Dict } from "@/i18n";
 import type { CardRarity } from "@/lib/types";
 
-const RARITIES: Array<{ key: CardRarity; label: string; bonus: string; odds: string }> = [
-  { key: "rare", label: "Rare", bonus: "+5 XP", odds: "22%" },
-  { key: "epic", label: "Epic", bonus: "+20 XP", odds: "7%" },
-  { key: "legendary", label: "Legendary", bonus: "+50 XP", odds: "1%" },
-];
+interface RarityChoice {
+  key: CardRarity;
+  bonus: string;
+  odds: string;
+}
 
-const PRESETS = [
-  { title: "玩 30 分鐘 game", rarity: "rare" as CardRarity },
-  { title: "Netflix 一集", rarity: "rare" as CardRarity },
-  { title: "食一支雪糕", rarity: "rare" as CardRarity },
-  { title: "出去食一餐想食嘅", rarity: "epic" as CardRarity },
-  { title: "買嗰本想要嘅書", rarity: "epic" as CardRarity },
-  { title: "去旅行訂機票", rarity: "legendary" as CardRarity },
-];
+const RARITIES: readonly RarityChoice[] = [
+  { key: "rare", bonus: "+5 XP", odds: "22%" },
+  { key: "epic", bonus: "+20 XP", odds: "7%" },
+  { key: "legendary", bonus: "+50 XP", odds: "1%" },
+] as const;
+
+interface Preset {
+  titleKey: keyof Dict["rewards"];
+  rarity: CardRarity;
+}
+
+const PRESETS: readonly Preset[] = [
+  { titleKey: "preset_game", rarity: "rare" },
+  { titleKey: "preset_netflix", rarity: "rare" },
+  { titleKey: "preset_icecream", rarity: "rare" },
+  { titleKey: "preset_meal", rarity: "epic" },
+  { titleKey: "preset_book", rarity: "epic" },
+  { titleKey: "preset_trip", rarity: "legendary" },
+] as const;
 
 export function RewardForm() {
+  const dict = useDict();
   const [state, action, pending] = useActionState<RewardCardFormState, FormData>(
     createRewardCard,
     { ok: false },
   );
   const [rarity, setRarity] = useState<CardRarity>("rare");
 
-  const fillPreset = (p: (typeof PRESETS)[number]) => {
+  const fillPreset = (p: Preset) => {
     const titleEl = document.querySelector(
       'input[name="title"]',
     ) as HTMLInputElement | null;
-    if (titleEl) titleEl.value = p.title;
+    if (titleEl) titleEl.value = dict.rewards[p.titleKey];
     setRarity(p.rarity);
   };
 
   return (
     <form action={action} className="flex flex-col gap-4" key={state.ok ? "ok" : "form"}>
       <div>
-        <p className="mb-1.5 text-[11px] text-[var(--color-fg-subtle)]">快速範例</p>
-        <div className="flex flex-wrap gap-1.5">
+        <p
+          style={{
+            marginBottom: 8,
+            fontSize: 11,
+            fontWeight: 700,
+            color: "var(--color-muted)",
+          }}
+        >
+          {dict.rewards.form_quick_examples}
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {PRESETS.map((p) => (
             <button
-              key={p.title}
+              key={p.titleKey}
               type="button"
               onClick={() => fillPreset(p)}
-              className="rounded-full border border-[var(--color-border-strong)] px-2.5 py-1 text-[11px] hover:border-[var(--color-accent)]"
+              style={{
+                background: "var(--color-primary-soft)",
+                color: "var(--color-primary)",
+                border: "none",
+                borderRadius: 999,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
             >
-              {p.title}
+              {dict.rewards[p.titleKey]}
             </button>
           ))}
         </div>
       </div>
 
       <label className="block">
-        <span className="mb-1 block text-sm font-medium">獎勵名稱</span>
+        <span className="mb-1 block text-sm font-medium">
+          {dict.rewards.form_name_label}
+        </span>
         <input
           name="title"
           required
           maxLength={40}
-          placeholder="例：玩 30 分鐘 Genshin"
+          placeholder={dict.rewards.form_name_placeholder}
           className="input-field"
         />
         {state.fieldErrors?.title && (
-          <p className="mt-1 text-[12px] text-[var(--color-rose)]">
+          <p style={{ marginTop: 4, fontSize: 12, color: "var(--color-danger)" }}>
             {state.fieldErrors.title}
           </p>
         )}
@@ -70,59 +105,108 @@ export function RewardForm() {
 
       <label className="block">
         <span className="mb-1 block text-sm font-medium">
-          描述 <span className="text-[var(--color-fg-subtle)]">(可空)</span>
+          {dict.rewards.form_copy_label}{" "}
+          <span style={{ color: "var(--color-muted)", fontWeight: 400 }}>
+            {dict.rewards.form_copy_optional}
+          </span>
         </span>
         <input
           name="copy"
           maxLength={160}
-          placeholder="可空。空就自動：「___ · 你今日贏到嘅。」"
+          placeholder={dict.rewards.form_copy_placeholder}
           className="input-field"
         />
       </label>
 
       <div>
-        <span className="mb-2 block text-sm font-medium">等級</span>
-        <div className="grid grid-cols-3 gap-2">
-          {RARITIES.map((r) => (
-            <label
-              key={r.key}
-              className={`surface-card cursor-pointer px-2 py-2.5 text-center ${
-                rarity === r.key ? "ring-2 ring-[var(--color-accent)]" : ""
-              }`}
-            >
-              <input
-                type="radio"
-                name="rarity"
-                value={r.key}
-                checked={rarity === r.key}
-                onChange={() => setRarity(r.key)}
-                className="sr-only"
-              />
-              <div className="text-[12px] font-medium">{r.label}</div>
-              <div className="text-[10px] text-[var(--color-fg-subtle)]">
-                {r.odds} · {r.bonus}
-              </div>
-            </label>
-          ))}
+        <span className="mb-2 block text-sm font-medium">
+          {dict.rewards.form_rarity_label}
+        </span>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+          {RARITIES.map((r) => {
+            const active = rarity === r.key;
+            return (
+              <label
+                key={r.key}
+                style={{
+                  background: active
+                    ? "var(--color-primary-soft)"
+                    : "var(--color-surface)",
+                  color: active ? "var(--color-primary)" : "var(--color-text)",
+                  border: `1.5px solid ${active ? "var(--color-primary)" : "var(--color-border)"}`,
+                  borderRadius: 16,
+                  padding: "10px 8px",
+                  cursor: "pointer",
+                  textAlign: "center",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="rarity"
+                  value={r.key}
+                  checked={active}
+                  onChange={() => setRarity(r.key)}
+                  className="sr-only"
+                />
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                  }}
+                >
+                  {dict.rarities[r.key]}
+                </div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--color-muted)",
+                    marginTop: 2,
+                  }}
+                >
+                  {r.odds} · {r.bonus}
+                </div>
+              </label>
+            );
+          })}
         </div>
       </div>
 
       <input type="hidden" name="weight" value="1" />
 
       {state.error && !state.fieldErrors && (
-        <p className="rounded-[12px] border border-[var(--color-rose)] bg-[var(--color-rose-soft)] px-3 py-2 text-sm text-[var(--color-rose)]">
+        <p
+          style={{
+            borderRadius: 12,
+            border: "1.5px solid var(--color-danger)",
+            background:
+              "color-mix(in srgb, var(--color-danger) 12%, transparent)",
+            padding: "10px 12px",
+            fontSize: 14,
+            color: "var(--color-danger)",
+          }}
+        >
           {state.error}
         </p>
       )}
       {state.ok && (
-        <p className="rounded-[12px] border border-[var(--color-mint)] bg-[var(--color-mint-soft)] px-3 py-2 text-sm text-[var(--color-mint)]">
-          已加入牌庫
+        <p
+          style={{
+            borderRadius: 12,
+            border: "1.5px solid var(--color-success)",
+            background:
+              "color-mix(in srgb, var(--color-success) 12%, transparent)",
+            padding: "10px 12px",
+            fontSize: 14,
+            color: "var(--color-success)",
+          }}
+        >
+          {dict.rewards.form_success}
         </p>
       )}
 
-      <button type="submit" className="btn-primary" disabled={pending}>
-        {pending ? "建立中..." : "加入牌庫"}
-      </button>
+      <ChunkyButton type="submit" full disabled={pending}>
+        {pending ? dict.rewards.form_submitting : dict.rewards.form_submit}
+      </ChunkyButton>
     </form>
   );
 }

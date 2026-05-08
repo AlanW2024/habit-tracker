@@ -12,11 +12,17 @@ function daysInMonth(year: number, month: number): number {
 }
 
 function firstWeekdayOffset(year: number, month: number): number {
-  // Sunday-first calendar (matches user's HK convention).
   return new Date(year, month - 1, 1).getDay();
 }
 
-const HABIT_COLORS = ["#fbbf24", "#5eead4", "#fb7185", "#a78bfa", "#facc15"];
+const HABIT_COLORS = [
+  "#FF6B3D",
+  "#7C3AED",
+  "#5C9F22",
+  "#2D6FF0",
+  "#E0A800",
+  "#9B6BFF",
+];
 
 export function MonthlyHeatmap({
   year,
@@ -51,7 +57,7 @@ export function MonthlyHeatmap({
 
   return (
     <div>
-      <div className="mb-2 grid grid-cols-7 text-center text-[11px] uppercase tracking-wide text-[var(--color-fg-subtle)]">
+      <div className="mb-2 grid grid-cols-7 text-center" style={{ fontSize: 11, color: "var(--color-muted)", textTransform: "uppercase", letterSpacing: 1 }}>
         {["日", "一", "二", "三", "四", "五", "六"].map((w) => (
           <span key={w}>{w}</span>
         ))}
@@ -62,35 +68,61 @@ export function MonthlyHeatmap({
             return <div key={cell.key} className="aspect-square" />;
           const ids = cell.ids ?? [];
           const dayNum = Number(cell.date.slice(8));
+          const level = ids.length;
+          const innerRing = level >= 3;
           return (
             <div
               key={cell.key}
               className="heat-cell relative flex flex-col items-center justify-center"
-              title={`${cell.date} • ${ids.length} 個習慣完成`}
+              title={`${cell.date} • ${ids.length}`}
+              style={{
+                boxShadow: innerRing
+                  ? "inset 0 0 0 1.5px var(--color-surface)"
+                  : undefined,
+                background:
+                  level > 0
+                    ? `color-mix(in srgb, var(--color-primary) ${Math.min(80, 16 * level)}%, var(--color-surface-alt))`
+                    : undefined,
+              }}
             >
-              <span className="text-[11px] text-[var(--color-fg-subtle)]">
+              <span style={{ fontSize: 11, color: level >= 2 ? "var(--color-on-primary-strong)" : "var(--color-muted)", fontWeight: 700 }}>
                 {dayNum}
               </span>
-              <div className="mt-0.5 flex gap-0.5">
-                {ids.map((id) => (
-                  <span
-                    key={id}
-                    className="block h-1 w-1 rounded-full"
-                    style={{ background: habitColor.get(id) }}
-                  />
-                ))}
-              </div>
+              {ids.length > 0 && (
+                <div className="mt-0.5 flex gap-0.5">
+                  {ids.slice(0, 4).map((id) => (
+                    <span
+                      key={id}
+                      style={{
+                        display: "block",
+                        height: 3,
+                        width: 3,
+                        borderRadius: 99,
+                        background: habitColor.get(id) ?? "#fff",
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
       {habits.length > 0 && (
-        <ul className="mt-4 flex flex-wrap gap-3 text-xs text-[var(--color-fg-muted)]">
+        <ul
+          className="mt-4 flex flex-wrap gap-3"
+          style={{ fontSize: 12, color: "var(--color-muted)" }}
+        >
           {habits.map((h) => (
             <li key={h.id} className="flex items-center gap-1.5">
               <span
-                className="h-2 w-2 rounded-full"
-                style={{ background: habitColor.get(h.id) }}
+                style={{
+                  display: "block",
+                  height: 8,
+                  width: 8,
+                  borderRadius: 99,
+                  background: habitColor.get(h.id),
+                }}
               />
               {h.name}
             </li>

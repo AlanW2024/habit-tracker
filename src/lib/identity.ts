@@ -1,26 +1,49 @@
+import type { Dict } from "@/i18n";
+
+export type IdentityTierKey =
+  | "beginner"
+  | "daily_mover"
+  | "practitioner"
+  | "identity_forming"
+  | "identity_aligned"
+  | "master"
+  | "sage"
+  | "legend";
+
 interface IdentityTier {
   minLevel: number;
-  title: string;
-  blurb: string;
+  key: IdentityTierKey;
 }
 
-const TIERS: IdentityTier[] = [
-  { minLevel: 1, title: "Beginner", blurb: "你已經開始。" },
-  { minLevel: 5, title: "Daily Mover", blurb: "每日多走一步。" },
-  { minLevel: 10, title: "Practitioner", blurb: "你開始練。" },
-  { minLevel: 20, title: "Identity Forming", blurb: "你開始覺得自己係。" },
-  { minLevel: 30, title: "Identity Aligned", blurb: "你係呢種人。" },
-  { minLevel: 50, title: "Master", blurb: "你而家係榜樣。" },
-  { minLevel: 80, title: "Sage", blurb: "你嘅習慣已經唔再需要 app。" },
-  { minLevel: 99, title: "Legend", blurb: "新名稱由你定。" },
-];
+const TIERS: readonly IdentityTier[] = [
+  { minLevel: 1, key: "beginner" },
+  { minLevel: 5, key: "daily_mover" },
+  { minLevel: 10, key: "practitioner" },
+  { minLevel: 20, key: "identity_forming" },
+  { minLevel: 30, key: "identity_aligned" },
+  { minLevel: 50, key: "master" },
+  { minLevel: 80, key: "sage" },
+  { minLevel: 99, key: "legend" },
+] as const;
 
-export function identityFor(level: number): IdentityTier {
-  let result = TIERS[0];
+export function identityKeyFor(level: number): IdentityTierKey {
+  let result: IdentityTierKey = TIERS[0].key;
   for (const tier of TIERS) {
-    if (level >= tier.minLevel) result = tier;
+    if (level >= tier.minLevel) result = tier.key;
   }
   return result;
+}
+
+export function identityTitleFor(level: number, dict: Dict): string {
+  const key = identityKeyFor(level);
+  const titleKey = `tier_title_${key}` as keyof Dict["identity"];
+  return dict.identity[titleKey];
+}
+
+export function identityBlurbFor(level: number, dict: Dict): string {
+  const key = identityKeyFor(level);
+  const blurbKey = `tier_blurb_${key}` as keyof Dict["identity"];
+  return dict.identity[blurbKey];
 }
 
 const XP_BASE = 100;
