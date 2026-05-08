@@ -44,7 +44,7 @@ export default async function NewHabitPage() {
           </Link>
         </div>
       ) : (
-        <NewHabitForm existingCount={habits.length} />
+        <NewHabitForm />
       )}
     </div>
   );

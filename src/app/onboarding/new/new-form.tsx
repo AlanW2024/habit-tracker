@@ -3,10 +3,6 @@
 import { useActionState, useState } from "react";
 import { createHabit, type HabitFormState } from "@/lib/actions";
 
-interface NewHabitFormProps {
-  existingCount: number;
-}
-
 const TYPE_HINTS: Record<string, string> = {
   daily_must: "每日必達。最少做 tiny version。漏一日 OK，漏兩日會出 alert。",
   weekly_target: "每週達標 X/7 即達標。對唔係日日做嘅事比較人性。",
@@ -27,7 +23,7 @@ const PRESETS = [
   },
 ];
 
-export function NewHabitForm({ existingCount }: NewHabitFormProps) {
+export function NewHabitForm() {
   const [state, action, pending] = useActionState<HabitFormState, FormData>(
     createHabit,
     { ok: false },
@@ -174,7 +170,7 @@ export function NewHabitForm({ existingCount }: NewHabitFormProps) {
       )}
 
       <button type="submit" className="btn-primary mt-2" disabled={pending}>
-        {pending ? "建立中..." : `建立 (剩 ${1 - existingCount} 個 slot)`}
+        {pending ? "建立中..." : "建立 habit"}
       </button>
     </form>
   );
