@@ -23,17 +23,18 @@ export function LoginForm() {
   const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  async function handleSendCode(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function sendCode(successMessage: string) {
     setError(null);
+    setNotice(null);
     setPending(true);
 
     const sb = getBrowserSupabase();
     const redirect = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
     const { error: signInError } = await sb.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: redirect },
+      options: { emailRedirectTo: redirect, shouldCreateUser: false },
     });
     setPending(false);
     if (signInError) {
@@ -41,11 +42,18 @@ export function LoginForm() {
       return;
     }
     setStep("code");
+    setNotice(successMessage);
+  }
+
+  async function handleSendCode(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await sendCode("Code 已寄出。請開新 email，複製 6 位數字返嚟。");
   }
 
   async function handleVerifyCode(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setNotice(null);
     setPending(true);
 
     const sb = getBrowserSupabase();
@@ -56,7 +64,7 @@ export function LoginForm() {
     });
     setPending(false);
     if (verifyError) {
-      setError(verifyError.message);
+      setError("Code 過期或已被用過。請重新寄 code，再用最新 email 入面嘅 6 位數字。");
       return;
     }
     router.replace(next);
@@ -97,6 +105,12 @@ export function LoginForm() {
           </p>
         )}
 
+        {notice && !error && (
+          <p className="rounded-[12px] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-fg-muted)]">
+            {notice}
+          </p>
+        )}
+
         <button
           type="submit"
           className="btn-primary"
@@ -105,17 +119,28 @@ export function LoginForm() {
           {pending ? "驗證中..." : "登入"}
         </button>
 
-        <button
-          type="button"
-          className="text-[12px] text-[var(--color-fg-subtle)] underline self-center"
-          onClick={() => {
-            setStep("email");
-            setCode("");
-            setError(null);
-          }}
-        >
-          ← 用第二個 email
-        </button>
+        <div className="flex items-center justify-center gap-4">
+          <button
+            type="button"
+            className="text-[12px] text-[var(--color-fg-subtle)] underline"
+            disabled={pending}
+            onClick={() => sendCode("新 code 已寄出。只用最新 email 入面嘅 6 位數字。")}
+          >
+            重新寄 code
+          </button>
+          <button
+            type="button"
+            className="text-[12px] text-[var(--color-fg-subtle)] underline"
+            onClick={() => {
+              setStep("email");
+              setCode("");
+              setError(null);
+              setNotice(null);
+            }}
+          >
+            用第二個 email
+          </button>
+        </div>
       </form>
     );
   }
@@ -139,6 +164,12 @@ export function LoginForm() {
       {error && (
         <p className="rounded-[12px] border border-[var(--color-rose)] bg-[var(--color-rose-soft)] px-3 py-2 text-sm text-[var(--color-rose)]">
           {error}
+        </p>
+      )}
+
+      {notice && !error && (
+        <p className="rounded-[12px] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-fg-muted)]">
+          {notice}
         </p>
       )}
 
