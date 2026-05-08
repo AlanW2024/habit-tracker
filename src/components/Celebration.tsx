@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Disco } from "./Disco";
 import { useDict } from "@/i18n/Provider";
-import { format } from "@/i18n";
+import { format } from "@/i18n/format";
 
 interface CelebrationProps {
   /** Habit display info — name + new streak count after the completion. */

@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import zhTW from "./locales/zh-TW.json";
 import en from "./locales/en.json";
 
+export { format } from "./format";
+
 export type Locale = "zh-TW" | "en";
 
 // Source of truth for shape; en.json must structurally match.
@@ -40,12 +42,3 @@ export function htmlLang(locale: Locale): string {
   return locale === "zh-TW" ? "zh-Hant" : "en";
 }
 
-// Tiny mustache-style interpolation: replaces {key} with values[key].
-export function format(
-  template: string,
-  values: Record<string, string | number>,
-): string {
-  return template.replace(/\{(\w+)\}/g, (_, k: string) =>
-    k in values ? String(values[k]) : `{${k}}`,
-  );
-}
