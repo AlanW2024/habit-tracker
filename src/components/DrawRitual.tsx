@@ -11,6 +11,8 @@ interface DrawRitualProps {
   open: boolean;
   trigger: Trigger;
   onClose: () => void;
+  // Dev-only: force a specific rarity. Honored only when NODE_ENV === 'development'.
+  forceRarity?: CardRarity;
 }
 
 const RARITY_STYLE: Record<
@@ -230,14 +232,21 @@ function ParticleBurst({ color }: { color: string }) {
   );
 }
 
-export function DrawRitual({ open, trigger, onClose }: DrawRitualProps) {
+export function DrawRitual({
+  open,
+  trigger,
+  onClose,
+  forceRarity,
+}: DrawRitualProps) {
   const [phase, setPhase] = useState<Phase>("back");
   const [card, setCard] = useState<DrawCard | null>(null);
+  const [xpBonus, setXpBonus] = useState(0);
 
   useEffect(() => {
     if (open) {
       setPhase("back");
       setCard(null);
+      setXpBonus(0);
     }
   }, [open]);
 
@@ -266,16 +275,17 @@ export function DrawRitual({ open, trigger, onClose }: DrawRitualProps) {
     }
 
     // 2. Fetch in parallel with the charge animation
-    const drawnPromise = drawCard(trigger);
+    const drawnPromise = drawCard(trigger, forceRarity);
 
     // 3. Start flip after 400ms charge
     await new Promise((r) => setTimeout(r, 400));
     setPhase("flip");
 
     // 4. Resolve fetch + flip animation (720ms)
-    const drawn = await drawnPromise;
+    const result = await drawnPromise;
     await new Promise((r) => setTimeout(r, 720));
-    setCard(drawn);
+    setCard(result?.card ?? null);
+    setXpBonus(result?.xpBonus ?? 0);
     setPhase("revealed");
     if (typeof navigator !== "undefined" && "vibrate" in navigator) {
       try {
@@ -359,7 +369,21 @@ export function DrawRitual({ open, trigger, onClose }: DrawRitualProps) {
               <div className="flip-face flip-front">
                 {card ? (
                   <>
-                    <div className="front-rarity">{style.label}</div>
+                    <div className="front-rarity-row">
+                      <span className="front-rarity">{style.label}</span>
+                      {xpBonus > 0 && (
+                        <span
+                          className="front-xp"
+                          style={{
+                            color: style.particleColor,
+                            borderColor: style.border,
+                            boxShadow: `0 0 12px ${style.flashColor}`,
+                          }}
+                        >
+                          +{xpBonus} XP
+                        </span>
+                      )}
+                    </div>
                     <h2
                       className="front-title"
                       style={{ textShadow: style.titleGlow }}
@@ -565,12 +589,32 @@ export function DrawRitual({ open, trigger, onClose }: DrawRitualProps) {
           padding: 24px 22px;
           gap: 0.75rem;
         }
+        .front-rarity-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.5rem;
+          margin-bottom: 6px;
+        }
         .front-rarity {
           font-size: 10px;
           letter-spacing: 0.32em;
           text-transform: uppercase;
           color: var(--color-fg-muted);
-          margin-bottom: 6px;
+        }
+        .front-xp {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          padding: 4px 10px;
+          border-radius: 999px;
+          border: 1px solid;
+          background: rgba(0,0,0,0.4);
+          animation: xp-pop 480ms 360ms cubic-bezier(.2,1.4,.4,1) backwards;
+        }
+        @keyframes xp-pop {
+          from { opacity: 0; transform: scale(0.4) translateY(4px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
         }
         .front-title {
           font-size: 26px;

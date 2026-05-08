@@ -7,6 +7,7 @@ import { getServerSupabase } from "./supabase/server";
 import { SELF_USER_ID } from "./supabase/config";
 import {
   RARITY_WEIGHTS,
+  RARITY_XP_BONUS,
   XP_PER_7DAY_STREAK,
   XP_PER_DAILY_COMPLETE,
   XP_PER_WEEKLY_TARGET,
@@ -14,6 +15,11 @@ import {
   todayIso,
 } from "./domain";
 import type { CardRarity, DrawCard, StreakState } from "./types";
+
+export interface DrawResult {
+  card: DrawCard;
+  xpBonus: number;
+}
 
 const habitInput = z.object({
   name: z.string().min(1, "請填習慣名稱").max(40),
@@ -178,10 +184,34 @@ export async function completeHabit(
 
 export async function drawCard(
   trigger: CompleteResult["trigger"],
-): Promise<DrawCard | null> {
-  const card = await drawRandomCard(trigger);
+  forceRarity?: CardRarity,
+): Promise<DrawResult | null> {
+  // Dev-only override: only honor forceRarity in development
+  const rarityOverride =
+    process.env.NODE_ENV === "development" ? forceRarity : undefined;
+  const card = await drawRandomCard(trigger, rarityOverride);
+  if (!card) return null;
+
+  // Rarity-tier XP bonus
+  const xpBonus = RARITY_XP_BONUS[card.rarity] ?? 0;
+  if (xpBonus > 0) {
+    const sb = getServerSupabase();
+    const { data: prof } = await sb
+      .from("profiles")
+      .select("xp")
+      .eq("id", SELF_USER_ID)
+      .single();
+    if (prof) {
+      await sb
+        .from("profiles")
+        .update({ xp: (prof.xp ?? 0) + xpBonus })
+        .eq("id", SELF_USER_ID);
+    }
+    revalidatePath("/today");
+  }
+
   revalidatePath("/stats");
-  return card;
+  return { card, xpBonus };
 }
 
 async function checkWeeklyTarget(
@@ -212,9 +242,12 @@ async function checkWeeklyTarget(
   return (count ?? 0) >= habit.weekly_goal;
 }
 
-async function drawRandomCard(trigger: string): Promise<DrawCard | null> {
+async function drawRandomCard(
+  trigger: string,
+  forceRarity?: CardRarity,
+): Promise<DrawCard | null> {
   const sb = getServerSupabase();
-  const rarity = pickRarity();
+  const rarity = forceRarity ?? pickRarity();
   const { data: cards } = await sb
     .from("draw_cards")
     .select("*")

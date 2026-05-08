@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HabitCard } from "@/components/HabitCard";
+import { DevPanel } from "@/components/DevPanel";
 import { getProfile, getTodayHabits } from "@/lib/db";
 import { todayIso } from "@/lib/domain";
 import { identityFor, levelFromTotalXp } from "@/lib/identity";
@@ -69,6 +70,7 @@ export default async function TodayPage() {
       ) : (
         <EmptyState />
       )}
+      <DevPanel />
     </div>
   );
 }

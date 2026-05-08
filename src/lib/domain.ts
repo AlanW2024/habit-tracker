@@ -86,6 +86,15 @@ export const RARITY_WEIGHTS: CardRarityWeight = {
   legendary: 1,
 };
 
+// Rarity-tier reward — 唔同 rarity 派唔同 bonus XP
+// Common 唔加 bonus 因為已經有 base XP，留住 rarity 跳升嘅落差感
+export const RARITY_XP_BONUS: CardRarityWeight = {
+  common: 0,
+  rare: 5,
+  epic: 20,
+  legendary: 50,
+};
+
 export function todayIso(): string {
   const now = new Date();
   const y = now.getFullYear();
