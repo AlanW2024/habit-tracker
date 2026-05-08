@@ -359,17 +359,21 @@ export function DrawRitual({
                 aria-label="抽一張卡"
                 className="flip-face flip-back"
               >
-                <div className="back-aura" />
-                <div className="back-content">
-                  <div className="sigil-wrap">
-                    <Sigil />
-                  </div>
-                  <p className="back-prompt">
-                    {phase === "back"
-                      ? dict.draw_ritual.tap_to_draw
-                      : dict.draw_ritual.charging}
-                  </p>
-                </div>
+                {!revealed && (
+                  <>
+                    <div className="back-aura" />
+                    <div className="back-content">
+                      <div className="sigil-wrap">
+                        <Sigil />
+                      </div>
+                      <p className="back-prompt">
+                        {phase === "back"
+                          ? dict.draw_ritual.tap_to_draw
+                          : dict.draw_ritual.charging}
+                      </p>
+                    </div>
+                  </>
+                )}
               </button>
 
               {/* FRONT */}
