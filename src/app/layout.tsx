@@ -25,10 +25,28 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "1% Discipline · 自律打卡",
   description: "每天進步 1%。建立習慣、累積身份、看見複利。",
+  applicationName: "1% Discipline",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "1%",
+  },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/apple-icon.png",
+  },
+  formatDetection: {
+    telephone: false,
+    email: false,
+    address: false,
   },
 };
 
