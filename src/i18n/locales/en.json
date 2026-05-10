@@ -66,9 +66,17 @@
   "login": {
     "brand": "1% — Discipline",
     "title": "Sign in",
-    "subtitle": "No password. Enter your email and we'll send you a 6-digit login code.",
+    "subtitle": "Enter your email and password. First-time users can sign in with a 6-digit code.",
     "email_label": "Email",
     "email_placeholder": "you@example.com",
+    "password_label": "Password",
+    "password_placeholder": "At least 6 characters",
+    "password_hint": "iOS will save your password for instant auto-fill next time.",
+    "sign_in": "Sign in",
+    "signing_in": "Signing in...",
+    "invalid_credentials": "Wrong email or password. If you haven't set a password yet, sign in with a 6-digit code first, then set one in the Me tab.",
+    "use_otp_instead": "Sign in with a 6-digit code",
+    "use_password_instead": "← Sign in with password",
     "send_code": "Send login code",
     "sending": "Sending...",
     "code_sent": "Code sent. Open your email and copy the 6 digits back here.",
@@ -103,7 +111,15 @@
   "profile": {
     "title": "My profile",
     "level": "Lv.{level}",
-    "xp_progress": "{cur} / {need} XP · level up for a new identity title"
+    "xp_progress": "{cur} / {need} XP · level up for a new identity title",
+    "password_section_title": "Password",
+    "password_section_hint": "Once set, iOS auto-fills it next time — sign in in 2 seconds.",
+    "password_label": "New password",
+    "password_placeholder": "At least 6 characters",
+    "password_set_cta": "Set password",
+    "password_change_cta": "Change password",
+    "password_saving": "Saving...",
+    "password_saved": "Saved. Next time, sign in with email + password."
   },
   "stats": {
     "title": "Stats",
@@ -217,7 +233,8 @@
     "habit_cap_day1": "Day 1 cap: max 2 habits. Unlocked after 21 days.",
     "habit_name_required": "Please enter a habit name",
     "if_then_too_short": "If-then must be at least 6 chars. Be concrete: what / when / where.",
-    "reward_name_required": "Please enter a reward name"
+    "reward_name_required": "Please enter a reward name",
+    "password_too_short": "Password must be at least 6 characters"
   },
   "celebration": {
     "title": "Complete +1!",

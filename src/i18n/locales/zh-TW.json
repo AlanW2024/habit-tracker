@@ -66,9 +66,17 @@
   "login": {
     "brand": "1% — 自律打卡",
     "title": "登入",
-    "subtitle": "沒有密碼。輸入你的 email，會收到一組 6 位數登入 code。",
+    "subtitle": "輸入 email 和密碼。第一次登入可改用 6 位數 code。",
     "email_label": "Email",
     "email_placeholder": "you@example.com",
+    "password_label": "密碼",
+    "password_placeholder": "至少 6 個字",
+    "password_hint": "iOS 會記住你的密碼，下次自動填入。",
+    "sign_in": "登入",
+    "signing_in": "登入中...",
+    "invalid_credentials": "Email 或密碼不正確。如果你還沒設密碼，請改用 6 位數 code 登入，登入後到「我」分頁設密碼。",
+    "use_otp_instead": "改用 6 位數 code 登入",
+    "use_password_instead": "← 改用密碼登入",
     "send_code": "寄登入 code",
     "sending": "傳送中...",
     "code_sent": "Code 已寄出。請打開 email，把 6 位數字複製回來。",
@@ -103,7 +111,15 @@
   "profile": {
     "title": "我的檔案",
     "level": "Lv.{level}",
-    "xp_progress": "{cur} / {need} XP · 升級換新 identity title"
+    "xp_progress": "{cur} / {need} XP · 升級換新 identity title",
+    "password_section_title": "密碼",
+    "password_section_hint": "設定密碼之後，下次登入 iOS 會自動填入，2 秒搞定。",
+    "password_label": "新密碼",
+    "password_placeholder": "至少 6 個字",
+    "password_set_cta": "設定密碼",
+    "password_change_cta": "更改密碼",
+    "password_saving": "儲存中...",
+    "password_saved": "已儲存。下次登入用 email + 密碼。"
   },
   "stats": {
     "title": "統計",
@@ -217,7 +233,8 @@
     "habit_cap_day1": "Day 1 上限：最多 2 個習慣。21 天後可以解鎖增加。",
     "habit_name_required": "請填習慣名稱",
     "if_then_too_short": "If-then 不能少於 6 字。寫清楚：what / when / where。",
-    "reward_name_required": "請填獎勵名"
+    "reward_name_required": "請填獎勵名",
+    "password_too_short": "密碼最少 6 個字"
   },
   "celebration": {
     "title": "完成 +1!",

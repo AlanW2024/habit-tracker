@@ -1,5 +1,6 @@
 import { Disco } from "@/components/Disco";
 import { PreferencesCard } from "@/components/PreferencesCard";
+import { SetPasswordForm } from "@/components/SetPasswordForm";
 import { getDict, format } from "@/i18n";
 import {
   identityBlurbFor,
@@ -111,6 +112,32 @@ export default async function ProfilePage() {
       <div style={{ marginBottom: 24 }}>
         <PreferencesCard />
       </div>
+
+      <section style={{ marginBottom: 24 }}>
+        <h2
+          style={{
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            color: "var(--color-muted)",
+            marginBottom: 10,
+            paddingLeft: 4,
+          }}
+        >
+          {dict.profile.password_section_title}
+        </h2>
+        <div
+          style={{
+            background: "var(--color-surface)",
+            border: "1.5px solid var(--color-border)",
+            borderRadius: 16,
+            padding: 16,
+          }}
+        >
+          <SetPasswordForm />
+        </div>
+      </section>
 
       <form action={signOut}>
         <button

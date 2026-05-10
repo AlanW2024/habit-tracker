@@ -294,6 +294,29 @@ export async function signOut(): Promise<void> {
   redirect("/login");
 }
 
+export type SetPasswordState = {
+  ok: boolean;
+  errorKey?: "password_too_short" | "generic";
+  errorMessage?: string;
+  saved?: boolean;
+};
+
+export async function setUserPassword(
+  _prev: SetPasswordState | undefined,
+  formData: FormData,
+): Promise<SetPasswordState> {
+  const password = String(formData.get("password") || "");
+  if (password.length < 6) {
+    return { ok: false, errorKey: "password_too_short" };
+  }
+  const sb = await getServerSupabase();
+  const { error } = await sb.auth.updateUser({ password });
+  if (error) {
+    return { ok: false, errorKey: "generic", errorMessage: error.message };
+  }
+  return { ok: true, saved: true };
+}
+
 export async function archiveHabit(habitId: string): Promise<void> {
   const sb = await getServerSupabase();
   await sb

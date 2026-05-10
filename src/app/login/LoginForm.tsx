@@ -6,7 +6,7 @@ import { getBrowserSupabase } from "@/lib/supabase/browser";
 import { ChunkyButton } from "@/components/ui/ChunkyButton";
 import { useDict } from "@/i18n/Provider";
 
-type Step = "email" | "code";
+type Mode = "credentials" | "otp_email" | "otp_code";
 
 function safeNextPath(value: string | null): string {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
@@ -21,12 +21,33 @@ export function LoginForm() {
   const next = safeNextPath(params.get("next"));
   const dict = useDict();
 
-  const [step, setStep] = useState<Step>("email");
+  const [mode, setMode] = useState<Mode>("credentials");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  async function handlePasswordSignIn(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setNotice(null);
+    setPending(true);
+
+    const sb = getBrowserSupabase();
+    const { error: signInError } = await sb.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    setPending(false);
+    if (signInError) {
+      setError(dict.login.invalid_credentials);
+      return;
+    }
+    router.replace(next);
+    router.refresh();
+  }
 
   async function sendCode(successMessage: string) {
     setError(null);
@@ -44,7 +65,7 @@ export function LoginForm() {
       setError(signInError.message);
       return;
     }
-    setStep("code");
+    setMode("otp_code");
     setNotice(successMessage);
   }
 
@@ -74,7 +95,92 @@ export function LoginForm() {
     router.refresh();
   }
 
-  if (step === "code") {
+  if (mode === "credentials") {
+    return (
+      <form onSubmit={handlePasswordSignIn} className="flex flex-col gap-4">
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium">
+            {dict.login.email_label}
+          </span>
+          <input
+            type="email"
+            inputMode="email"
+            name="email"
+            autoComplete="username email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={dict.login.email_placeholder}
+            className="input-field"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium">
+            {dict.login.password_label}
+          </span>
+          <input
+            type="password"
+            name="password"
+            autoComplete="current-password"
+            minLength={6}
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={dict.login.password_placeholder}
+            className="input-field"
+          />
+        </label>
+
+        {error && <ErrorBox text={error} />}
+        {notice && !error && <NoticeBox text={notice} />}
+
+        <ChunkyButton
+          type="submit"
+          full
+          disabled={pending || !email.trim() || password.length < 6}
+        >
+          {pending ? dict.login.signing_in : dict.login.sign_in}
+        </ChunkyButton>
+
+        <p
+          style={{
+            fontSize: 12,
+            color: "var(--color-muted)",
+            opacity: 0.85,
+            textAlign: "center",
+            marginTop: 4,
+          }}
+        >
+          {dict.login.password_hint}
+        </p>
+
+        <button
+          type="button"
+          onClick={() => {
+            setMode("otp_email");
+            setPassword("");
+            setError(null);
+            setNotice(null);
+          }}
+          style={{
+            fontSize: 13,
+            color: "var(--color-primary)",
+            textDecoration: "underline",
+            background: "transparent",
+            border: "none",
+            marginTop: 8,
+            alignSelf: "center",
+            cursor: "pointer",
+          }}
+        >
+          {dict.login.use_otp_instead}
+        </button>
+      </form>
+    );
+  }
+
+  if (mode === "otp_code") {
     return (
       <form onSubmit={handleVerifyCode} className="flex flex-col gap-4">
         <div className="surface-card px-5 py-4">
@@ -112,35 +218,8 @@ export function LoginForm() {
           />
         </label>
 
-        {error && (
-          <p
-            style={{
-              borderRadius: 12,
-              border: "1.5px solid var(--color-danger)",
-              background: "color-mix(in srgb, var(--color-danger) 12%, transparent)",
-              padding: "10px 12px",
-              fontSize: 14,
-              color: "var(--color-danger)",
-            }}
-          >
-            {error}
-          </p>
-        )}
-
-        {notice && !error && (
-          <p
-            style={{
-              borderRadius: 12,
-              border: "1.5px solid var(--color-border)",
-              background: "var(--color-surface)",
-              padding: "10px 12px",
-              fontSize: 14,
-              color: "var(--color-muted)",
-            }}
-          >
-            {notice}
-          </p>
-        )}
+        {error && <ErrorBox text={error} />}
+        {notice && !error && <NoticeBox text={notice} />}
 
         <ChunkyButton
           type="submit"
@@ -159,6 +238,9 @@ export function LoginForm() {
               fontSize: 12,
               color: "var(--color-muted)",
               textDecoration: "underline",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
             }}
           >
             {dict.login.resend}
@@ -166,7 +248,7 @@ export function LoginForm() {
           <button
             type="button"
             onClick={() => {
-              setStep("email");
+              setMode("otp_email");
               setCode("");
               setError(null);
               setNotice(null);
@@ -175,6 +257,9 @@ export function LoginForm() {
               fontSize: 12,
               color: "var(--color-muted)",
               textDecoration: "underline",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
             }}
           >
             {dict.login.use_other_email}
@@ -193,7 +278,7 @@ export function LoginForm() {
         <input
           type="email"
           inputMode="email"
-          autoComplete="email"
+          autoComplete="username email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -202,39 +287,68 @@ export function LoginForm() {
         />
       </label>
 
-      {error && (
-        <p
-          style={{
-            borderRadius: 12,
-            border: "1.5px solid var(--color-danger)",
-            background: "color-mix(in srgb, var(--color-danger) 12%, transparent)",
-            padding: "10px 12px",
-            fontSize: 14,
-            color: "var(--color-danger)",
-          }}
-        >
-          {error}
-        </p>
-      )}
-
-      {notice && !error && (
-        <p
-          style={{
-            borderRadius: 12,
-            border: "1.5px solid var(--color-border)",
-            background: "var(--color-surface)",
-            padding: "10px 12px",
-            fontSize: 14,
-            color: "var(--color-muted)",
-          }}
-        >
-          {notice}
-        </p>
-      )}
+      {error && <ErrorBox text={error} />}
+      {notice && !error && <NoticeBox text={notice} />}
 
       <ChunkyButton type="submit" full disabled={pending || !email.trim()}>
         {pending ? dict.login.sending : dict.login.send_code}
       </ChunkyButton>
+
+      <button
+        type="button"
+        onClick={() => {
+          setMode("credentials");
+          setError(null);
+          setNotice(null);
+        }}
+        style={{
+          fontSize: 13,
+          color: "var(--color-primary)",
+          textDecoration: "underline",
+          background: "transparent",
+          border: "none",
+          marginTop: 8,
+          alignSelf: "center",
+          cursor: "pointer",
+        }}
+      >
+        {dict.login.use_password_instead}
+      </button>
     </form>
+  );
+}
+
+function ErrorBox({ text }: { text: string }) {
+  return (
+    <p
+      style={{
+        borderRadius: 12,
+        border: "1.5px solid var(--color-danger)",
+        background:
+          "color-mix(in srgb, var(--color-danger) 12%, transparent)",
+        padding: "10px 12px",
+        fontSize: 14,
+        color: "var(--color-danger)",
+      }}
+    >
+      {text}
+    </p>
+  );
+}
+
+function NoticeBox({ text }: { text: string }) {
+  return (
+    <p
+      style={{
+        borderRadius: 12,
+        border: "1.5px solid var(--color-border)",
+        background: "var(--color-surface)",
+        padding: "10px 12px",
+        fontSize: 14,
+        color: "var(--color-muted)",
+      }}
+    >
+      {text}
+    </p>
   );
 }
